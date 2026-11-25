@@ -585,13 +585,15 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"target":        map[string]interface{}{"type": "string", "description": "Workload target as <kind>/<name>, e.g. deploy/api"},
-						"namespace":     map[string]interface{}{"type": "string", "description": "Namespace of the target workload (default: default)"},
-						"context":       map[string]interface{}{"type": "string", "description": "Explicit Kubernetes context name"},
-						"revision":      map[string]interface{}{"type": "string", "description": "Expected Git SHA or controller revision"},
-						"digest":        map[string]interface{}{"type": "string", "description": "Expected OCI digest (sha256:...)"},
-						"unit_revision": map[string]interface{}{"type": "string", "description": "Expected ConfigHub unit revision"},
-						"wait":          map[string]interface{}{"type": "string", "description": "Bounded read-only wait duration (default 0s, max 60s)"},
+						"target":            map[string]interface{}{"type": "string", "description": "Workload target as <kind>/<name>, e.g. deploy/api"},
+						"namespace":         map[string]interface{}{"type": "string", "description": "Namespace of the target workload (default: default)"},
+						"context":           map[string]interface{}{"type": "string", "description": "Explicit Kubernetes context name"},
+						"revision":          map[string]interface{}{"type": "string", "description": "Expected Git SHA or controller revision"},
+						"digest":            map[string]interface{}{"type": "string", "description": "Expected OCI digest (sha256:...)"},
+						"unit_revision":     map[string]interface{}{"type": "string", "description": "Expected ConfigHub unit revision"},
+						"verify_pod_images": map[string]interface{}{"type": "boolean", "description": "Verify running Pod imageIDs match expected image/digest"},
+						"image":             map[string]interface{}{"type": "string", "description": "Expected Pod image or sha256 digest (with verify_pod_images)"},
+						"wait":              map[string]interface{}{"type": "string", "description": "Bounded read-only wait duration (default 0s, max 60s)"},
 					},
 					"required":             []string{"target"},
 					"additionalProperties": false,
@@ -621,6 +623,16 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if unitRev := argString(arguments, "unit_revision"); unitRev != "" {
 					args = append(args, "--unit-revision", unitRev)
+				}
+				verifyPodImages := argBool(arguments, "verify_pod_images")
+				if verifyPodImages {
+					args = append(args, "--verify-pod-images")
+				}
+				if img := argString(arguments, "image"); img != "" {
+					if !verifyPodImages {
+						return nil, fmt.Errorf("image requires verify_pod_images=true")
+					}
+					args = append(args, "--image", img)
 				}
 				if rawWait := argString(arguments, "wait"); rawWait != "" {
 					d, err := time.ParseDuration(rawWait)

@@ -127,6 +127,7 @@ type LandingSnapshot struct {
 	Source     *LandingLinkObservation
 	Deployer   *LandingLinkObservation
 	Workload   *LandingLinkObservation
+	PodImages  *LandingLinkObservation
 	ObservedAt time.Time
 }
 
@@ -186,6 +187,85 @@ func AnchorMatches(anchor LandingAnchor, observed string) bool {
 	default:
 		return false
 	}
+}
+
+func stripImageScheme(s string) string {
+	s = strings.TrimSpace(s)
+	for _, prefix := range []string{"docker-pullable://", "docker://", "containerd://", "cri-o://"} {
+		if strings.HasPrefix(s, prefix) {
+			return strings.TrimPrefix(s, prefix)
+		}
+	}
+	return s
+}
+
+func extractSHA256Digest(s string) string {
+	s = stripImageScheme(s)
+	idx := strings.LastIndex(s, "sha256:")
+	if idx < 0 {
+		return ""
+	}
+	d := strings.TrimSpace(s[idx:])
+	if len(d) <= len("sha256:") {
+		return ""
+	}
+	return d
+}
+
+// PodImageMatches reports whether a running container's status.imageID or
+// status.image matches an expected image reference or sha256 digest.
+// Matching is deterministic and conservative: empty or malformed values never match.
+func PodImageMatches(expected, imageID, image string) bool {
+	want := stripImageScheme(expected)
+	if want == "" {
+		return false
+	}
+	gotID := stripImageScheme(imageID)
+	gotImg := stripImageScheme(image)
+	if gotID == "" && gotImg == "" {
+		return false
+	}
+
+	if wantDigest := extractSHA256Digest(want); wantDigest != "" {
+		// Bare digest: sha256:<hex>
+		if strings.HasPrefix(want, "sha256:") {
+			return extractSHA256Digest(gotID) == wantDigest || extractSHA256Digest(gotImg) == wantDigest
+		}
+		// Repository-qualified digest: <repo>@sha256:<hex>
+		if gotID == want || gotImg == want {
+			return true
+		}
+		wantRepo, _, hasAt := strings.Cut(want, "@")
+		if !hasAt || wantRepo == "" {
+			return false
+		}
+		for _, candidate := range []string{gotID, gotImg} {
+			if extractSHA256Digest(candidate) != wantDigest {
+				continue
+			}
+			gotRepo, _, ok := strings.Cut(candidate, "@")
+			if !ok {
+				continue
+			}
+			if gotRepo == wantRepo || strings.HasSuffix(gotRepo, "/"+wantRepo) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Tag or repository reference without digest.
+	if gotImg == want || gotID == want {
+		return true
+	}
+	firstSeg, _, hasSlash := strings.Cut(want, "/")
+	hasRegistry := hasSlash && (strings.Contains(firstSeg, ".") || strings.Contains(firstSeg, ":") || firstSeg == "localhost")
+	if !hasRegistry {
+		if gotImg == "docker.io/library/"+want || gotImg == "docker.io/"+want {
+			return true
+		}
+	}
+	return false
 }
 
 // EvaluateLanding deterministically classifies a single LandingSnapshot
@@ -334,6 +414,27 @@ func EvaluateLanding(anchor LandingAnchor, snap LandingSnapshot) LandingEvaluati
 
 	switch snap.Workload.Status {
 	case "ready":
+		if snap.PodImages != nil && snap.PodImages.Present {
+			switch snap.PodImages.Status {
+			case "ready":
+				// Independent pod-image witness confirmed running pods match.
+			case "failed":
+				eval.State = LandingStateNotLanded
+				eval.Reason = LandingReasonWorkloadFailed
+				eval.Summary = fmt.Sprintf("Controller and %s/%s reported ready, but running Pod images disagreed with the expected image or digest.", snap.Target.Kind, snap.Target.Name)
+				eval.BrokenLink = &LandingBrokenLink{
+					Stage:  LandingStageWorkload,
+					Ref:    snap.PodImages.Ref,
+					Quoted: snap.PodImages.Message,
+				}
+				return eval
+			default:
+				eval.State = LandingStateNotObservable
+				eval.Reason = LandingReasonTargetNotFound
+				eval.Summary = fmt.Sprintf("Running Pod image verification for %s/%s could not be determined.", snap.Target.Kind, snap.Target.Name)
+				return eval
+			}
+		}
 		eval.State = LandingStateLanded
 		if anchor.Kind == AnchorKindOCIDigest {
 			eval.Reason = LandingReasonDigestAndWorkloadConverged

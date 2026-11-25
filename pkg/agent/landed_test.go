@@ -247,6 +247,18 @@ func TestEvaluateLanding_ZeroFalseLandedInvariant(t *testing.T) {
 			Deployer: &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: anchor.Value},
 			Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "failed"},
 		}},
+		{"pod image mismatch despite ready controller and workload", anchor, LandingSnapshot{
+			Target: deployRef, TargetFound: true, Owner: "ArgoCD",
+			Deployer:  &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: anchor.Value},
+			Workload:  &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+			PodImages: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "failed", Message: "pod api-1 imageID did not match"},
+		}},
+		{"pod image verification unknown despite ready controller", anchor, LandingSnapshot{
+			Target: deployRef, TargetFound: true, Owner: "ArgoCD",
+			Deployer:  &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: anchor.Value},
+			Workload:  &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+			PodImages: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "unknown"},
+		}},
 	}
 
 	for _, tc := range negativeControls {
@@ -256,5 +268,70 @@ func TestEvaluateLanding_ZeroFalseLandedInvariant(t *testing.T) {
 				t.Fatalf("negative control %q produced false landed (%+v)", tc.name, eval)
 			}
 		})
+	}
+}
+
+func TestPodImageMatches(t *testing.T) {
+	const digest = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	const otherDigest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+
+	cases := []struct {
+		name     string
+		expected string
+		imageID  string
+		image    string
+		want     bool
+	}{
+		{"bare digest matches docker-pullable imageID", digest, "docker-pullable://ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1", true},
+		{"bare digest matches containerd imageID", digest, "ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1", true},
+		{"bare digest matches bare imageID", digest, digest, "ghcr.io/org/app:v1", true},
+		{"bare digest mismatch", otherDigest, "docker-pullable://ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1", false},
+		{"repo+digest exact match", "ghcr.io/org/app@" + digest, "docker-pullable://ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1", true},
+		{"repo+digest different repo rejected", "evil.io/other@" + digest, "docker-pullable://ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1", false},
+		{"short library repo+digest matches docker.io/library", "nginx@" + digest, "docker-pullable://docker.io/library/nginx@" + digest, "nginx:1.25", true},
+		{"tag ref matches exact image", "ghcr.io/org/app:v1.2.3", "docker-pullable://ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1.2.3", true},
+		{"short tag ref matches docker.io/library", "nginx:1.25", "", "docker.io/library/nginx:1.25", true},
+		{"tag ref mismatch", "nginx:1.26", "", "docker.io/library/nginx:1.25", false},
+		{"empty expected never matches", "", "docker-pullable://ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1", false},
+		{"empty sha256 prefix never matches", "sha256:", "docker-pullable://ghcr.io/org/app@" + digest, "ghcr.io/org/app:v1", false},
+		{"empty observed never matches", digest, "", "", false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := PodImageMatches(tc.expected, tc.imageID, tc.image); got != tc.want {
+				t.Fatalf("PodImageMatches(%q, %q, %q) = %v, want %v", tc.expected, tc.imageID, tc.image, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestEvaluateLanding_PodImagesWitness(t *testing.T) {
+	deployRef := LandingObjectRef{APIVersion: "apps/v1", Kind: "Deployment", Namespace: "prod", Name: "api"}
+	podRef := &LandingObjectRef{APIVersion: "v1", Kind: "Pod", Namespace: "prod", Name: "api-abc12"}
+	argoRef := &LandingObjectRef{APIVersion: "argoproj.io/v1alpha1", Kind: "Application", Namespace: "argocd", Name: "api"}
+	anchor := LandingAnchor{Kind: AnchorKindGitSHA, Value: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+
+	okEval := EvaluateLanding(anchor, LandingSnapshot{
+		Target: deployRef, TargetFound: true, Owner: "ArgoCD",
+		Deployer:  &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: anchor.Value},
+		Workload:  &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+		PodImages: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready", Message: "2/2 running pods matched"},
+	})
+	if okEval.State != LandingStateLanded || okEval.Reason != LandingReasonRevisionAndWorkloadConverged {
+		t.Fatalf("positive pod witness got (%s, %s), want (landed, revision-and-workload-converged)", okEval.State, okEval.Reason)
+	}
+
+	mismatchEval := EvaluateLanding(anchor, LandingSnapshot{
+		Target: deployRef, TargetFound: true, Owner: "ArgoCD",
+		Deployer:  &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: anchor.Value},
+		Workload:  &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+		PodImages: &LandingLinkObservation{Present: true, Ref: podRef, Status: "failed", Message: "running pod api-abc12 disagreed"},
+	})
+	if mismatchEval.State != LandingStateNotLanded || mismatchEval.Reason != LandingReasonWorkloadFailed {
+		t.Fatalf("negative pod witness got (%s, %s), want (not-landed, workload-failed)", mismatchEval.State, mismatchEval.Reason)
+	}
+	if mismatchEval.BrokenLink == nil || mismatchEval.BrokenLink.Stage != LandingStageWorkload || mismatchEval.BrokenLink.Ref == nil || mismatchEval.BrokenLink.Ref.Kind != "Pod" {
+		t.Fatalf("unexpected brokenLink: %+v", mismatchEval.BrokenLink)
 	}
 }
