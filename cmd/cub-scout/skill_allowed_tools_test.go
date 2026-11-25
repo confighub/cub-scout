@@ -35,6 +35,7 @@ var readOnlyScoutPaths = map[string]bool{
 	"app list":                  true,
 	"audit":                     true,
 	"audit list":                true,
+	"before-write":              true,
 	"bundle diff":               true,
 	"bundle inspect":            true,
 	"bundle summarize":          true,

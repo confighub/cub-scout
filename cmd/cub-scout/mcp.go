@@ -41,6 +41,7 @@ var mcpServeCmd = &cobra.Command{
 	Long: `Serve a read-only Model Context Protocol (MCP) gateway over stdio.
 
 Supported tools in standalone mode:
+  - before_write
   - doctor
   - map
   - trace
@@ -48,6 +49,7 @@ Supported tools in standalone mode:
   - explain
   - gitops_status
   - gitops_settings
+  - landed
 
 Additional tools in connected mode (when authenticated to ConfigHub):
   - confighub_attestations
@@ -572,6 +574,57 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						return nil, fmt.Errorf("api_version requires diff and desired_file")
 					}
 					args = append(args, "--api-version", version)
+				}
+				args = append(args, "--format", "json")
+				return args, nil
+			},
+		},
+		"before_write": {
+			Descriptor: mcpToolDescriptor{
+				Name:        "before_write",
+				Description: "Read-only pre-write safety check: ownership, deployer revert settings (Flux suspend, Argo selfHeal/syncWindows), field contention, and matching PDBs (before-write --format json).",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"resource":   map[string]interface{}{"type": "string", "description": "Target resource as <kind>/<name>, e.g. deploy/api"},
+						"namespace":  map[string]interface{}{"type": "string", "description": "Namespace of the target resource (default: default)"},
+						"field_path": map[string]interface{}{"type": "string", "description": "Exact canonical managedFields path, e.g. .spec.replicas"},
+						"context":    map[string]interface{}{"type": "string", "description": "Exact kubeconfig context name"},
+					},
+					"required":             []string{"resource"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				resource := argString(arguments, "resource")
+				if resource == "" {
+					return nil, fmt.Errorf("missing required argument: resource")
+				}
+				fieldPath := argString(arguments, "field_path")
+				if raw, present := arguments["field_path"]; present {
+					if _, ok := raw.(string); !ok {
+						return nil, fmt.Errorf("field_path must be a string")
+					}
+				}
+				if fieldPath != "" {
+					if err := agent.ValidateCanonicalFieldPath(fieldPath); err != nil {
+						return nil, err
+					}
+				}
+				args := []string{"before-write", resource}
+				if raw, present := arguments["context"]; present {
+					value, ok := raw.(string)
+					if !ok || strings.TrimSpace(value) == "" {
+						return nil, fmt.Errorf("context must be a non-empty kubeconfig context name")
+					}
+					args = append(args, "--kube-context", value)
+				}
+				if ns := argString(arguments, "namespace"); ns != "" {
+					args = append(args, "-n", ns)
+				}
+				if fieldPath != "" {
+					args = append(args, "--field-path", fieldPath)
 				}
 				args = append(args, "--format", "json")
 				return args, nil

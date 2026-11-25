@@ -24,6 +24,7 @@ import (
 // Measured 2026-11-24 on deterministic fixtures, rounded up to the next
 // hundred bytes.
 var mcpAnswerBlockCeilings = map[string]int{
+	"before_write":         700,  // 672 bytes (3.3 pre-write sensor, strictly < 1 KB)
 	"compare_source_truth": 400,  // 336 bytes
 	"doctor":               500,  // 418 bytes
 	"explain":              900,  // 821 bytes
@@ -103,7 +104,24 @@ func TestAnswerBlocksStayWithinDeclaredSizeCeilings(t *testing.T) {
 		},
 	), nil)
 
+	beforeWriteAns := buildBeforeWriteAnswer(beforeWriteOutput{
+		Context: "prod-east",
+		Target:  beforeWriteTarget{Kind: "Deployment", Name: "api", Namespace: "prod"},
+		Owner:   beforeWriteOwner{Type: agent.OwnerFlux, Display: "Flux", Name: "apps", Namespace: "flux-system"},
+		Deployer: &beforeWriteDeployerSettings{
+			Ref: "Kustomization/flux-system/apps", Kind: "Kustomization", Namespace: "flux-system", Name: "apps",
+		},
+		PDBs: []beforeWritePDB{{Name: "api-pdb", MinAvailable: "1"}},
+	}, beforeWriteAnswerFacts{
+		objectRead:        true,
+		owner:             agent.Ownership{Type: agent.OwnerFlux, Name: "apps", Namespace: "flux-system"},
+		deployerAttempted: true,
+		deployerRead:      true,
+		observedAt:        observedAtForTests,
+	})
+
 	answers := map[string]interface{}{
+		"before_write":         beforeWriteAns,
 		"trace":                traceOut.Answer,
 		"compare_source_truth": sourceTruthAns,
 		"gitops_status":        gitopsAns,

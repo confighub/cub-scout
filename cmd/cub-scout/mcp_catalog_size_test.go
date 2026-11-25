@@ -17,6 +17,7 @@ import (
 // on purpose, and say why. Shrinking needs no permission; lower the ceiling
 // when you do. (Agent plan, package C; four bytes is roughly one token.)
 var mcpCatalogToolCeilings = map[string]int{
+	"before_write":              900, // 3.3 pre-write sensor, 2026-11-25
 	"compare_source_truth":      1900,
 	"compare_three_way":         1400,
 	"confighub_attestations":    600,
@@ -46,7 +47,8 @@ var mcpCatalogToolCeilings = map[string]int{
 // before_attach parameter (#888) added 72 bytes on 2026-11-18: 15,218 and
 // 31,224.
 // Updated 2026-11-24 when the standalone `landed` tool (A(1) + G1/G2) was added.
-var mcpCatalogTotalCeilings = map[bool]int{false: 16600, true: 32600}
+// Updated 2026-11-25 when the standalone `before_write` tool (3.3 pre-write sensor) was added (17233 and 33001 bytes).
+var mcpCatalogTotalCeilings = map[bool]int{false: 17300, true: 33100}
 
 func mcpCatalogSizes(connected bool) (map[string]int, int) {
 	gateway := newMCPGatewayWithMode(nil, nil, connected)
@@ -106,7 +108,8 @@ func TestMCPCoreProfileStaysWithinItsDeclaredSize(t *testing.T) {
 	index, _ := callText(t, profileGateway(t, "core", true, nil), mcpMoreToolName, nil)
 	t.Logf("cub_scout_more: %d bytes in the catalog; connected index %d bytes", len(more), len(index))
 	// Raised from 2800 to 3000 on 2026-11-24 when `landed` (A(1) + G1/G2) was added (2981 bytes).
-	if len(index) > 3000 {
-		t.Errorf("the connected index is %d bytes, over its ceiling of 3000", len(index))
+	// Raised from 3000 to 3300 on 2026-11-25 when `before_write` (3.3 pre-write sensor) was added.
+	if len(index) > 3300 {
+		t.Errorf("the connected index is %d bytes, over its ceiling of 3300", len(index))
 	}
 }

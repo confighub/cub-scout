@@ -21,6 +21,7 @@ Source of truth:
 |---------|---------------|--------------|-----------------|
 | `app` | Manage ConfigHub Apps | [Command Reference](commands.md#app) | [Argo import demo](../../examples/argo-import-confighub-demo/) |
 | `audit` | Break-glass audit trail tools | [Command Reference](commands.md#audit-list) | [Connect and compare](../../examples/connect-and-compare/) |
+| `before-write` | Read-only pre-write safety check: ownership, deployer revert settings, sync windows, field contention, and matching PDBs | [Vision 3.x](../proposals/vision-3.x.md) | - |
 | `bot` | Run the watch engine as an in-cluster observation bot | [Command Reference](commands.md#bot) | [Bot deployment](../../examples/bot/) |
 | `bundle` | Inspect, replay, diff, and summarize debug bundles | [Command Reference](commands.md#bundle-inspect-v015) | [Artifact workflows](../../examples/workflows/) |
 | `catalog` | Manage bundle catalogs | [Command Reference](commands.md#catalog-list-v015) | [Artifact workflows](../../examples/workflows/) |
