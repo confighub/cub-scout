@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.confighub/cub-scout",
+  "description": "Read-only, deterministic Kubernetes & GitOps witness for AI agents (Flux, Argo CD, Helm, kro, Crossplane, Sveltos). Verifies whether revisions landed, attributes field ownership, and caps every answer under declared byte ceilings.",
+  "repository": {
+    "url": "https://github.com/confighub/cub-scout",
+    "source": "github"
+  },
+  "version": "3.0.0",
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/confighub/cub-scout:v3.0.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
