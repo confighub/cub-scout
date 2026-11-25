@@ -29,6 +29,7 @@ import (
 
 var (
 	traceKubeContext         string
+	traceRecording           string // Offline recorded multi-object YAML/JSON snapshot file
 	traceNamespace           string
 	traceFormat              string // output format: ascii, json
 	traceApp                 string // For direct Argo app tracing
@@ -133,6 +134,7 @@ func init() {
 	rootCmd.AddCommand(traceCmd)
 
 	traceCmd.Flags().StringVar(&traceKubeContext, "kube-context", "", "Use this exact Kubernetes context for trace reads")
+	traceCmd.Flags().StringVar(&traceRecording, "recording", "", "Evaluate a recorded multi-object YAML/JSON snapshot offline (no cluster access)")
 	traceCmd.Flags().StringVarP(&traceNamespace, "namespace", "n", "", "Namespace of the resource (default: flux-system; Application names must be unique if omitted)")
 	traceCmd.Flags().StringVar(&traceFormat, "format", "ascii", "Output format: ascii, json, md")
 	rejectRemovedFlags(traceCmd, map[string]string{
@@ -217,6 +219,48 @@ func runTrace(cmd *cobra.Command, args []string) error {
 	// Default namespace
 	if traceNamespace == "" && kind != "Application" && !(traceDiff && !traceReverse) {
 		traceNamespace = "flux-system"
+	}
+
+	// Offline recorded snapshot mode (Theme 4: zero cluster/network access).
+	if strings.TrimSpace(traceRecording) != "" {
+		if selection.explicit {
+			return fmt.Errorf("--recording cannot be combined with --kube-context")
+		}
+		if traceDiff || strings.TrimSpace(traceDesiredFile) != "" || strings.TrimSpace(traceAPIVersion) != "" {
+			return fmt.Errorf("--recording cannot be combined with --diff")
+		}
+		if traceReverse {
+			return fmt.Errorf("--recording cannot be combined with --reverse")
+		}
+		if traceHistory {
+			return fmt.Errorf("--recording cannot be combined with --history")
+		}
+		if traceWithConfigHub || cmd.Flags().Changed("confighub-space") || cmd.Flags().Changed("confighub-since") || cmd.Flags().Changed("confighub-stale-after") {
+			return fmt.Errorf("--recording cannot be combined with --with-confighub or ConfigHub options")
+		}
+		if os.Getenv("CUB_SCOUT_TEST_TRACE_JSON") != "" || os.Getenv("CUB_SCOUT_TEST_TRACE_ARTIFACTS_JSON") != "" {
+			return fmt.Errorf("--recording cannot be combined with trace fixture input")
+		}
+		snapshot, err := readRecordedObjectSnapshot(traceRecording)
+		if err != nil {
+			return err
+		}
+		result, artifacts, err := observeTraceFromSnapshot(snapshot, kind, name, traceNamespace)
+		if err != nil {
+			return err
+		}
+		effectiveNS := traceNamespace
+		if effectiveNS == "" && result.Object.Namespace != "" {
+			effectiveNS = result.Object.Namespace
+		}
+		switch effectiveFormat {
+		case "json":
+			return outputOfflineTraceJSON(result, snapshot, kind, name, effectiveNS, artifacts)
+		case "md":
+			return outputTraceMarkdown(result, artifacts, invCtx)
+		default:
+			return outputTraceHuman(result, artifacts, invCtx)
+		}
 	}
 
 	// Preserve legacy reverse precedence when both mode flags are supplied.
