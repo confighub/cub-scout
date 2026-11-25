@@ -44,10 +44,11 @@ timing, secret and event lines are left out. For an
 agent, the same answer is JSON (`--format json`) or an MCP tool: point your
 MCP client at `cub-scout mcp serve`, a local read-only stdio server.
 
-[v2.19.0 release](https://github.com/confighub/cub-scout/releases/tag/v2.19.0)
+[v3.0.0 release](https://github.com/confighub/cub-scout/releases/tag/v3.0.0)
 | [Start here](docs/getting-started/start-here.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
+| [Answer sizes (99.78% smaller)](docs/reference/answer-sizes.md)
 | [What "for an agent" means](docs/reference/agentic-gitops-observability.md)
 
 ## What is measured, and what is not
