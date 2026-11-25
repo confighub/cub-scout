@@ -154,3 +154,32 @@ Rather than publishing a spec for its own sake, the goal is **making
    contract between `cub mini` (writes) and `cub scout` (read-only witness).
 3. **3.2 next controller:** Prioritize Argo Rollouts or Modelplane first for
    real-cluster `landed` parity?
+
+---
+
+## 6. The 3.5 Value Proposition (Positioning Anchor)
+
+> **`cub-scout` is the independent, deterministic witness that lets AI agents,
+> CI gates, and platform teams *prove* a change actually landed across
+> Kubernetes clusters — at 99.8% lower token cost than `kubectl`, with zero
+> hallucination and zero cluster write permissions.**
+
+- **Before writing (`before-write` / `explain --field-path`):** One sub-KB
+  read-only call for `cub mini` and agent skills: live field value, last
+  manager (`agent/*` included), Flux/Argo revert risk, writer contention,
+  `syncWindows`, and PDBs.
+- **After writing (`landed --verify-pod-images`):** One uniform,
+  revision-anchored answer across Flux, Argo CD, Helm v3/v4, kro, Crossplane,
+  and Argo Rollouts — verifying running Pod `imageID` digests independently of
+  controller self-report.
+- **Agent economics & safety:** 99.78% fewer bytes than raw K8s objects
+  (CI-enforced ceilings + 89-byte `--if-unchanged` delta polls), zero LLM in
+  the read path, all cluster text quoted, air-gapped via `snapshot` +
+  `--recording`.
+- **Standalone → ConfigHub graduation (3.5):** Start in 30 seconds on any
+  cluster with zero lock-in; add ConfigHub for per-cluster observed facts
+  (`#600`), signed delivery attestations (`G4`, `#889`), and multi-cluster
+  `ChangeWorkflow` promotion gates (`dev` → `staging` → `prod`).
+- **Core line:** *"Don't let your deploy controller or your coding agent grade
+  its own rollout. `cub-scout` is the independent witness that makes autonomous
+  GitOps safe in production."*
