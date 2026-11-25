@@ -579,6 +579,8 @@ func newFakeSnapshotDynamicClient(objs ...runtime.Object) *dynamicfake.FakeDynam
 		{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}:   "OCIRepositoryList",
 		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}:             "ApplicationList",
 		{Group: "", Version: "v1", Resource: "secrets"}:                                   "SecretList",
+		{Group: "policy", Version: "v1", Resource: "poddisruptionbudgets"}:                "PodDisruptionBudgetList",
+		{Group: "", Version: "v1", Resource: "pods"}:                                      "PodList",
 	}
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objs...)
 }
@@ -810,5 +812,239 @@ func TestSnapshotRecording_OverDocumentLimitUsesListYAML(t *testing.T) {
 	}
 	if snap.ObservedAt != "2026-11-24T21:45:00Z" || snap.SourceContext != "large-cluster" {
 		t.Fatalf("unexpected snapshot metadata: observedAt=%q sourceContext=%q", snap.ObservedAt, snap.SourceContext)
+	}
+}
+
+func TestSnapshotRecording_PodSanitizationAndPDBCapture(t *testing.T) {
+	pod := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Pod",
+			"metadata": map[string]interface{}{
+				"name":              "web-7d9b8c-x4k2p",
+				"namespace":         "prod",
+				"creationTimestamp": "2026-11-24T18:00:00Z",
+				"uid":               "SHOULD-BE-STRIPPED-UID",
+				"labels": map[string]interface{}{
+					"app": "web",
+				},
+				"annotations": map[string]interface{}{
+					"safe.example.com/note":                            "ok",
+					"kubectl.kubernetes.io/last-applied-configuration": "SECRET-LAST-APPLIED-TOKEN",
+				},
+				"ownerReferences": []interface{}{
+					map[string]interface{}{
+						"apiVersion": "apps/v1",
+						"kind":       "ReplicaSet",
+						"name":       "web-7d9b8c",
+						"uid":        "rs-uid-1",
+					},
+				},
+			},
+			"spec": map[string]interface{}{
+				"serviceAccountName": "SHOULD-NOT-LEAK-SA",
+				"containers": []interface{}{
+					map[string]interface{}{
+						"name":    "web",
+						"image":   "ghcr.io/example/web:v1.2.3",
+						"command": []interface{}{"/bin/sh", "-c", "SECRET-COMMAND-ARG"},
+						"args":    []interface{}{"--token=SECRET-CLI-ARG"},
+						"env": []interface{}{
+							map[string]interface{}{"name": "API_KEY", "value": "SECRET-ENV-VALUE"},
+						},
+						"envFrom": []interface{}{
+							map[string]interface{}{
+								"secretRef": map[string]interface{}{"name": "SECRET-ENVFROM-NAME"},
+							},
+						},
+						"volumeMounts": []interface{}{
+							map[string]interface{}{"name": "creds", "mountPath": "/var/run/secrets/SECRET-MOUNT"},
+						},
+					},
+				},
+				"initContainers": []interface{}{
+					map[string]interface{}{"name": "init", "image": "SECRET-INIT-IMAGE"},
+				},
+				"volumes": []interface{}{
+					map[string]interface{}{
+						"name":   "creds",
+						"secret": map[string]interface{}{"secretName": "SECRET-VOLUME-NAME"},
+					},
+				},
+			},
+			"status": map[string]interface{}{
+				"phase":  "Running",
+				"podIP":  "10.244.0.99",
+				"hostIP": "192.168.1.50",
+				"conditions": []interface{}{
+					map[string]interface{}{"type": "Ready", "status": "True"},
+				},
+				"containerStatuses": []interface{}{
+					map[string]interface{}{
+						"name":         "web",
+						"ready":        true,
+						"image":        "ghcr.io/example/web:v1.2.3",
+						"imageID":      "ghcr.io/example/web@sha256:abcdef0123456789",
+						"restartCount": int64(1),
+						"state": map[string]interface{}{
+							"running": map[string]interface{}{"startedAt": "2026-11-24T18:01:00Z"},
+						},
+						"containerID": "containerd://STRIP-ME-CONTAINER-ID",
+					},
+				},
+			},
+		},
+	}
+
+	pdb := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "policy/v1",
+			"kind":       "PodDisruptionBudget",
+			"metadata": map[string]interface{}{
+				"name":      "web-pdb",
+				"namespace": "prod",
+				"labels":    map[string]interface{}{"app": "web"},
+			},
+			"spec": map[string]interface{}{
+				"minAvailable": int64(1),
+				"selector": map[string]interface{}{
+					"matchLabels": map[string]interface{}{"app": "web"},
+				},
+			},
+			"status": map[string]interface{}{
+				"currentHealthy":     int64(2),
+				"desiredHealthy":     int64(1),
+				"disruptionsAllowed": int64(1),
+			},
+		},
+	}
+
+	dynClient := newFakeSnapshotDynamicClient(pod, pdb)
+	captured, truncated, err := collectRecordedSnapshotObjects(context.Background(), dynClient, "prod", "", 200)
+	if err != nil {
+		t.Fatalf("collectRecordedSnapshotObjects failed: %v", err)
+	}
+	if truncated || len(captured) != 2 {
+		t.Fatalf("captured=%d truncated=%v, want 2/false", len(captured), truncated)
+	}
+
+	var gotPod, gotPDB *unstructured.Unstructured
+	for _, obj := range captured {
+		switch obj.GetKind() {
+		case "Pod":
+			gotPod = obj
+		case "PodDisruptionBudget":
+			gotPDB = obj
+		}
+	}
+	if gotPod == nil || gotPDB == nil {
+		t.Fatalf("expected both Pod and PodDisruptionBudget, got pod=%v pdb=%v", gotPod != nil, gotPDB != nil)
+	}
+
+	// Verify Pod safe fields are preserved.
+	if gotPod.GetName() != "web-7d9b8c-x4k2p" || gotPod.GetNamespace() != "prod" {
+		t.Fatalf("unexpected pod identity: %s/%s", gotPod.GetNamespace(), gotPod.GetName())
+	}
+	if gotPod.GetLabels()["app"] != "web" {
+		t.Fatalf("pod labels not preserved: %#v", gotPod.GetLabels())
+	}
+	if gotPod.GetAnnotations()["safe.example.com/note"] != "ok" {
+		t.Fatalf("safe pod annotation not preserved: %#v", gotPod.GetAnnotations())
+	}
+	if len(gotPod.GetOwnerReferences()) != 1 || gotPod.GetOwnerReferences()[0].Name != "web-7d9b8c" {
+		t.Fatalf("pod ownerReferences not preserved: %#v", gotPod.GetOwnerReferences())
+	}
+	if ct, _, _ := unstructured.NestedString(gotPod.Object, "metadata", "creationTimestamp"); ct != "2026-11-24T18:00:00Z" {
+		t.Fatalf("pod creationTimestamp = %q, want 2026-11-24T18:00:00Z", ct)
+	}
+
+	containers, found, err := unstructured.NestedSlice(gotPod.Object, "spec", "containers")
+	if err != nil || !found || len(containers) != 1 {
+		t.Fatalf("expected 1 sanitized container, got found=%v len=%d err=%v", found, len(containers), err)
+	}
+	c0 := containers[0].(map[string]interface{})
+	if c0["name"] != "web" || c0["image"] != "ghcr.io/example/web:v1.2.3" {
+		t.Fatalf("unexpected container fields: %#v", c0)
+	}
+	for _, forbiddenKey := range []string{"env", "envFrom", "args", "command", "volumeMounts"} {
+		if _, exists := c0[forbiddenKey]; exists {
+			t.Fatalf("pod container must strip %q", forbiddenKey)
+		}
+	}
+	specMap := gotPod.Object["spec"].(map[string]interface{})
+	for _, forbiddenSpecKey := range []string{"volumes", "initContainers", "serviceAccountName"} {
+		if _, exists := specMap[forbiddenSpecKey]; exists {
+			t.Fatalf("pod spec must strip %q", forbiddenSpecKey)
+		}
+	}
+
+	phase, _, _ := unstructured.NestedString(gotPod.Object, "status", "phase")
+	if phase != "Running" {
+		t.Fatalf("pod status.phase = %q, want Running", phase)
+	}
+	csList, found, _ := unstructured.NestedSlice(gotPod.Object, "status", "containerStatuses")
+	if !found || len(csList) != 1 {
+		t.Fatalf("expected 1 containerStatus, got found=%v len=%d", found, len(csList))
+	}
+	cs0 := csList[0].(map[string]interface{})
+	if cs0["imageID"] != "ghcr.io/example/web@sha256:abcdef0123456789" || cs0["ready"] != true {
+		t.Fatalf("unexpected containerStatus: %#v", cs0)
+	}
+	if _, exists := cs0["containerID"]; exists {
+		t.Fatal("containerStatuses[].containerID should be stripped")
+	}
+
+	// Verify PDB fields are preserved.
+	if gotPDB.GetAPIVersion() != "policy/v1" || gotPDB.GetName() != "web-pdb" {
+		t.Fatalf("unexpected PDB identity: %s %s", gotPDB.GetAPIVersion(), gotPDB.GetName())
+	}
+	minAvail, found, _ := unstructured.NestedInt64(gotPDB.Object, "spec", "minAvailable")
+	if !found || minAvail != 1 {
+		t.Fatalf("PDB spec.minAvailable = %d (found=%v), want 1", minAvail, found)
+	}
+	allowed, found, _ := unstructured.NestedInt64(gotPDB.Object, "status", "disruptionsAllowed")
+	if !found || allowed != 1 {
+		t.Fatalf("PDB status.disruptionsAllowed = %d (found=%v), want 1", allowed, found)
+	}
+
+	// Verify zero leakage in both YAML and JSON serialized snapshots and clean round-trip.
+	observedAt := time.Date(2026, 11, 24, 22, 30, 0, 0, time.UTC)
+	forbiddenStrings := []string{
+		"SECRET-ENV-VALUE",
+		"SECRET-ENVFROM-NAME",
+		"SECRET-CLI-ARG",
+		"SECRET-COMMAND-ARG",
+		"SECRET-MOUNT",
+		"SECRET-VOLUME-NAME",
+		"SECRET-INIT-IMAGE",
+		"SECRET-LAST-APPLIED-TOKEN",
+		"SHOULD-NOT-LEAK-SA",
+		"SHOULD-BE-STRIPPED-UID",
+		"STRIP-ME-CONTAINER-ID",
+		"10.244.0.99",
+		"192.168.1.50",
+	}
+	for _, format := range []string{snapshotFormatYAML, snapshotFormatJSON} {
+		var buf bytes.Buffer
+		if err := encodeRecordedSnapshot(&buf, format, captured, observedAt, "prod-cluster", false); err != nil {
+			t.Fatalf("encodeRecordedSnapshot(%s) failed: %v", format, err)
+		}
+		serialized := buf.String()
+		for _, forbidden := range forbiddenStrings {
+			if strings.Contains(serialized, forbidden) {
+				t.Fatalf("format=%s leaked forbidden pod content %q", format, forbidden)
+			}
+		}
+		filePath := filepath.Join(t.TempDir(), "snap."+format)
+		if err := os.WriteFile(filePath, buf.Bytes(), 0600); err != nil {
+			t.Fatal(err)
+		}
+		snap, err := readRecordedObjectSnapshot(filePath)
+		if err != nil {
+			t.Fatalf("readRecordedObjectSnapshot(%s) failed: %v", format, err)
+		}
+		if len(snap.Objects) != 2 {
+			t.Fatalf("round-trip(%s) len(Objects) = %d, want 2", format, len(snap.Objects))
+		}
 	}
 }

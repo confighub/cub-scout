@@ -105,11 +105,14 @@ By default (--format gsf), outputs GitOps State Format (GSF) JSON with ownership
 and optional relationships.
 
 With --format yaml or --format json, captures a bounded, sanitized offline
-recording of workloads (Deployment, StatefulSet, DaemonSet, Job, CronJob) and
+recording of workloads (Deployment, StatefulSet, DaemonSet, Job, CronJob),
 GitOps controller objects (Flux Kustomization/HelmRelease/GitRepository/OCIRepository,
 Argo CD Application, and Helm release Secrets with Secret.data and Secret.stringData
-strictly stripped). Offline commands such as landed --recording, gitops status
---recording, and doctor --recording evaluate these snapshots with zero cluster access.
+strictly stripped), policy/v1 PodDisruptionBudgets, and strictly sanitized core/v1
+Pods (metadata, spec.containers[].{name,image}, and status.{phase,conditions,containerStatuses}
+only — all env, envFrom, args, command, volumeMounts, and volumes are stripped).
+Offline commands such as landed --recording, gitops status --recording,
+doctor --recording, and trace --recording evaluate these snapshots with zero cluster access.
 
 Examples:
   # Output GSF JSON to stdout
@@ -709,6 +712,10 @@ func recordedSnapshotResources() []snapshotResourceSpec {
 		{GVR: schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}, Kind: "Application"},
 		// Helm release Secrets (filtered strictly to Helm release Secrets; data/stringData always stripped)
 		{GVR: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}, Kind: "Secret"},
+		// Disruption policies
+		{GVR: schema.GroupVersionResource{Group: "policy", Version: "v1", Resource: "poddisruptionbudgets"}, Kind: "PodDisruptionBudget"},
+		// Pods (strictly sanitized: no env/envFrom/args/command/volumeMounts/volumes)
+		{GVR: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}, Kind: "Pod"},
 	}
 }
 
@@ -788,7 +795,111 @@ func sanitizeRecordedSnapshotObject(item *unstructured.Unstructured, fallbackSpe
 		return &unstructured.Unstructured{Object: sanitized}
 	}
 
+	if strings.EqualFold(cp.GetKind(), "Pod") {
+		return sanitizeRecordedPodObject(cp)
+	}
+
 	return cp
+}
+
+// sanitizeRecordedPodObject returns a strictly sanitized Pod containing only
+// safe metadata, spec.containers[].{name,image}, and status.{phase,conditions,containerStatuses}.
+// All env, envFrom, args, command, volumeMounts, volumes, and other pod spec
+// fields are stripped so no secrets or tokens can ever leak into offline snapshots.
+func sanitizeRecordedPodObject(cp *unstructured.Unstructured) *unstructured.Unstructured {
+	meta, _ := cp.Object["metadata"].(map[string]interface{})
+	sanitizedMeta := map[string]interface{}{
+		"name":      cp.GetName(),
+		"namespace": cp.GetNamespace(),
+	}
+	for _, key := range []string{"labels", "ownerReferences", "creationTimestamp"} {
+		if val, exists := meta[key]; exists {
+			sanitizedMeta[key] = val
+		}
+	}
+	if rawAnn, ok := meta["annotations"].(map[string]interface{}); ok && len(rawAnn) > 0 {
+		cleanAnn := make(map[string]interface{}, len(rawAnn))
+		for k, v := range rawAnn {
+			if k == "kubectl.kubernetes.io/last-applied-configuration" {
+				continue
+			}
+			cleanAnn[k] = v
+		}
+		if len(cleanAnn) > 0 {
+			sanitizedMeta["annotations"] = cleanAnn
+		}
+	}
+
+	sanitized := map[string]interface{}{
+		"apiVersion": cp.GetAPIVersion(),
+		"kind":       "Pod",
+		"metadata":   sanitizedMeta,
+	}
+
+	// spec.containers[].{name,image} only.
+	if rawContainers, found, _ := unstructured.NestedSlice(cp.Object, "spec", "containers"); found && len(rawContainers) > 0 {
+		cleanContainers := make([]interface{}, 0, len(rawContainers))
+		for _, item := range rawContainers {
+			c, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			cleanC := map[string]interface{}{}
+			if name, ok := c["name"]; ok {
+				cleanC["name"] = name
+			}
+			if image, ok := c["image"]; ok {
+				cleanC["image"] = image
+			}
+			if len(cleanC) > 0 {
+				cleanContainers = append(cleanContainers, cleanC)
+			}
+		}
+		if len(cleanContainers) > 0 {
+			sanitized["spec"] = map[string]interface{}{
+				"containers": cleanContainers,
+			}
+		}
+	}
+
+	// status.{phase,conditions,containerStatuses[].{name,ready,image,imageID,restartCount,state}} only.
+	if rawStatus, ok := cp.Object["status"].(map[string]interface{}); ok && len(rawStatus) > 0 {
+		cleanStatus := map[string]interface{}{}
+		if phase, ok := rawStatus["phase"]; ok && phase != "" {
+			cleanStatus["phase"] = phase
+		}
+		if conds, ok := rawStatus["conditions"]; ok {
+			if condSlice, ok := conds.([]interface{}); ok && len(condSlice) > 0 {
+				cleanStatus["conditions"] = condSlice
+			}
+		}
+		if rawCS, ok := rawStatus["containerStatuses"].([]interface{}); ok && len(rawCS) > 0 {
+			cleanCS := make([]interface{}, 0, len(rawCS))
+			for _, item := range rawCS {
+				cs, ok := item.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				cleanItem := map[string]interface{}{}
+				for _, field := range []string{"name", "ready", "image", "imageID", "restartCount", "state"} {
+					if val, exists := cs[field]; exists {
+						cleanItem[field] = val
+					}
+				}
+				if len(cleanItem) > 0 {
+					cleanCS = append(cleanCS, cleanItem)
+				}
+			}
+			if len(cleanCS) > 0 {
+				cleanStatus["containerStatuses"] = cleanCS
+			}
+		}
+		if len(cleanStatus) > 0 {
+			sanitized["status"] = cleanStatus
+		}
+	}
+
+	return &unstructured.Unstructured{Object: sanitized}
 }
 
 func collectRecordedSnapshotObjects(ctx context.Context, dynClient dynamic.Interface, namespace, kindFilter string, maxObjects int) ([]*unstructured.Unstructured, bool, error) {
