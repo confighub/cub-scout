@@ -120,6 +120,101 @@ func TestEvaluateLanding_RecordedFixtures(t *testing.T) {
 			t.Fatalf("noOwner got (%s, %s), want (%s, %s)", noOwner.State, noOwner.Reason, LandingStateNotObservable, LandingReasonNoOwnerMarkerRecognised)
 		}
 	})
+
+	t.Run("07-kro-and-crossplane-landed-and-missing-revision", func(t *testing.T) {
+		kroRef := &LandingObjectRef{APIVersion: "kro.run/v1alpha1", Kind: "LaneApp", Namespace: "kro-lane", Name: "lane"}
+		kroLanded := EvaluateLanding(
+			LandingAnchor{Kind: AnchorKindGitSHA, Value: "2"},
+			LandingSnapshot{
+				Context: "prod-east", Target: deployRef, TargetFound: true, Owner: OwnerKro, ObservedAt: at,
+				Deployer: &LandingLinkObservation{Present: true, Ref: kroRef, Status: "ready", Revision: "2"},
+				Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+			},
+		)
+		if kroLanded.State != LandingStateLanded || kroLanded.Reason != LandingReasonRevisionAndWorkloadConverged {
+			t.Fatalf("kro landed got (%s, %s)", kroLanded.State, kroLanded.Reason)
+		}
+
+		kroNoRev := EvaluateLanding(
+			LandingAnchor{Kind: AnchorKindGitSHA, Value: "2"},
+			LandingSnapshot{
+				Context: "prod-east", Target: deployRef, TargetFound: true, Owner: OwnerKro, ObservedAt: at,
+				Deployer: &LandingLinkObservation{Present: true, Ref: kroRef, Status: "ready", Revision: ""},
+				Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+			},
+		)
+		if kroNoRev.State != LandingStateNotObservable || kroNoRev.Reason != LandingReasonUnsupportedController {
+			t.Fatalf("kro no-rev got (%s, %s), want not-observable/unsupported-controller", kroNoRev.State, kroNoRev.Reason)
+		}
+
+		xpRef := &LandingObjectRef{APIVersion: "lane.example.org/v1", Kind: "XLaneApp", Namespace: "xp-lane", Name: "lane"}
+		xpLanded := EvaluateLanding(
+			LandingAnchor{Kind: AnchorKindGitSHA, Value: "1"},
+			LandingSnapshot{
+				Context: "prod-east", Target: deployRef, TargetFound: true, Owner: OwnerCrossplane, ObservedAt: at,
+				Deployer: &LandingLinkObservation{Present: true, Ref: xpRef, Status: "ready", Revision: "1"},
+				Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+			},
+		)
+		if xpLanded.State != LandingStateLanded || xpLanded.Reason != LandingReasonRevisionAndWorkloadConverged {
+			t.Fatalf("crossplane landed got (%s, %s)", xpLanded.State, xpLanded.Reason)
+		}
+
+		xpNoRev := EvaluateLanding(
+			LandingAnchor{Kind: AnchorKindGitSHA, Value: "1"},
+			LandingSnapshot{
+				Context: "prod-east", Target: deployRef, TargetFound: true, Owner: OwnerCrossplane, ObservedAt: at,
+				Deployer: &LandingLinkObservation{Present: true, Ref: xpRef, Status: "ready", Revision: ""},
+				Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+			},
+		)
+		if xpNoRev.State != LandingStateNotObservable || xpNoRev.Reason != LandingReasonUnsupportedController {
+			t.Fatalf("crossplane no-rev got (%s, %s), want not-observable/unsupported-controller", xpNoRev.State, xpNoRev.Reason)
+		}
+	})
+
+	t.Run("08-sveltos-always-not-observable", func(t *testing.T) {
+		svRef := &LandingObjectRef{APIVersion: "config.projectsveltos.io/v1beta1", Kind: "ClusterProfile", Name: "prod-addons"}
+		eval := EvaluateLanding(
+			LandingAnchor{Kind: AnchorKindGitSHA, Value: targetSHA},
+			LandingSnapshot{
+				Context: "prod-east", Target: deployRef, TargetFound: true, Owner: OwnerSveltos, ObservedAt: at,
+				Deployer: &LandingLinkObservation{Present: true, Ref: svRef, Status: "unknown"},
+				Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+			},
+		)
+		if eval.State != LandingStateNotObservable || eval.Reason != LandingReasonUnsupportedController {
+			t.Fatalf("sveltos got (%s, %s), want not-observable/unsupported-controller", eval.State, eval.Reason)
+		}
+	})
+
+	t.Run("09-job-and-cronjob-targets", func(t *testing.T) {
+		jobRef := LandingObjectRef{APIVersion: "batch/v1", Kind: "Job", Namespace: "prod", Name: "migrate"}
+		jobOK := EvaluateLanding(
+			LandingAnchor{Kind: AnchorKindGitSHA, Value: targetSHA},
+			LandingSnapshot{
+				Context: "prod-east", Target: jobRef, TargetFound: true, Owner: "ArgoCD", ObservedAt: at,
+				Deployer: &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: targetSHA},
+				Workload: &LandingLinkObservation{Present: true, Ref: &jobRef, Status: "ready"},
+			},
+		)
+		if jobOK.State != LandingStateLanded || jobOK.Reason != LandingReasonRevisionAndWorkloadConverged {
+			t.Fatalf("job ok got (%s, %s)", jobOK.State, jobOK.Reason)
+		}
+
+		cjRef := LandingObjectRef{APIVersion: "batch/v1", Kind: "CronJob", Namespace: "prod", Name: "nightly"}
+		cjProg := EvaluateLanding(
+			LandingAnchor{Kind: AnchorKindGitSHA, Value: targetSHA},
+			LandingSnapshot{
+				Context: "prod-east", Target: cjRef, TargetFound: true, Owner: "ArgoCD", ObservedAt: at,
+				Deployer: &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: targetSHA},
+				Workload: &LandingLinkObservation{Present: true, Ref: &cjRef, Status: "progressing", Message: "CronJob has 1 active Job(s)"},
+			},
+		)
+		if cjProg.State != LandingStateConverging || cjProg.Reason != LandingReasonWorkloadRollingOut {
+			t.Fatalf("cronjob progressing got (%s, %s)", cjProg.State, cjProg.Reason)
+		}
+	})
 }
 
 func TestWaitForLanding_BoundedWaitEarlyExitAndTimeout(t *testing.T) {
@@ -258,6 +353,21 @@ func TestEvaluateLanding_ZeroFalseLandedInvariant(t *testing.T) {
 			Deployer:  &LandingLinkObservation{Present: true, Ref: argoRef, Status: "ready", Revision: anchor.Value},
 			Workload:  &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
 			PodImages: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "unknown"},
+		}},
+		{"kro ready without observedGeneration", anchor, LandingSnapshot{
+			Target: deployRef, TargetFound: true, Owner: OwnerKro,
+			Deployer: &LandingLinkObservation{Present: true, Status: "ready", Revision: ""},
+			Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+		}},
+		{"crossplane ready without observedGeneration", anchor, LandingSnapshot{
+			Target: deployRef, TargetFound: true, Owner: OwnerCrossplane,
+			Deployer: &LandingLinkObservation{Present: true, Status: "ready", Revision: ""},
+			Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
+		}},
+		{"sveltos with ready workload", anchor, LandingSnapshot{
+			Target: deployRef, TargetFound: true, Owner: OwnerSveltos,
+			Deployer: &LandingLinkObservation{Present: true, Status: "ready", Revision: anchor.Value},
+			Workload: &LandingLinkObservation{Present: true, Ref: &deployRef, Status: "ready"},
 		}},
 	}
 

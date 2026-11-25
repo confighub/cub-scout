@@ -52,15 +52,39 @@ for path in sys.argv[1:]:
   tail -n 40 "$out/kro.log" >&2
   exit 1
 fi
+kubectl rollout status deployment/lane-web -n kro-lane --timeout=60s || true
+kubectl wait --for=condition=Ready laneapps.kro.run/lane -n kro-lane --timeout=60s || true
+kubectl get laneapps.kro.run lane -n kro-lane -o json > "$out/instance.json" 2>&1 || true
 kubectl get deployment lane-web -n kro-lane -o json > "$out/deployment.json"
 
 "$scout" map list --json --namespace kro-lane --ownership-evidence > "$out/map-list.json"
 "$scout" trace deployment/lane-web -n kro-lane --format json > "$out/trace.json" 2> "$out/trace.stderr" || true
 "$scout" tree composition > "$out/tree-composition.txt" 2>&1 || true
 
-python3 - "$out" <<'PY'
+kro_obs_gen=$(python3 -c '
 import json, sys
-out = sys.argv[1]
+d = json.load(open(sys.argv[1]))
+st = d.get("status") or {}
+gen = None
+for c in st.get("conditions") or []:
+    if c.get("type") in ("Ready", "InstanceReady") and c.get("observedGeneration"):
+        gen = c["observedGeneration"]
+        break
+if not gen and st.get("observedGeneration"):
+    gen = st["observedGeneration"]
+print(gen or "")
+' "$out/instance.json" 2>/dev/null || true)
+
+if [[ -n "$kro_obs_gen" ]]; then
+  "$scout" landed deployment/lane-web -n kro-lane --revision "$kro_obs_gen" --format json > "$out/landed-ok.json"
+  "$scout" landed deployment/lane-web -n kro-lane --revision 99 --format json > "$out/landed-wrong.json"
+else
+  "$scout" landed deployment/lane-web -n kro-lane --revision 1 --format json > "$out/landed-no-anchor.json"
+fi
+
+python3 - "$out" "$kro_obs_gen" <<'PY'
+import json, sys
+out, kro_obs_gen = sys.argv[1], sys.argv[2]
 meta = json.load(open(out + "/deployment.json"))["metadata"]
 labels = meta.get("labels") or {}
 owner_refs = ["%s/%s %s" % (r.get("apiVersion"), r.get("kind"), r.get("name")) for r in meta.get("ownerReferences") or []]
@@ -91,6 +115,23 @@ if trace is None:
     bad.append("trace printed no JSON (stderr in trace.stderr)")
 elif state == "no-owner-marker":
     bad.append("trace says no owner marker, but kro's labels are on the object")
+if kro_obs_gen:
+    ok_doc = json.load(open(out + "/landed-ok.json"))
+    wrong_doc = json.load(open(out + "/landed-wrong.json"))
+    ok_state = (ok_doc.get("answer") or {}).get("state")
+    wrong_state = (wrong_doc.get("answer") or {}).get("state")
+    lines.append("landed(--revision %s)=%s, landed(--revision 99)=%s" % (kro_obs_gen, ok_state, wrong_state))
+    if ok_state != "landed":
+        bad.append("landed --revision %s state %s, want landed" % (kro_obs_gen, ok_state))
+    if wrong_state != "not-landed":
+        bad.append("landed --revision 99 state %s, want not-landed" % wrong_state)
+else:
+    na_doc = json.load(open(out + "/landed-no-anchor.json"))
+    na_state = (na_doc.get("answer") or {}).get("state")
+    lines.append("landed(no observedGeneration)=%s" % na_state)
+    if na_state != "not-observable":
+        bad.append("landed without observedGeneration state %s, want not-observable" % na_state)
+open(out + "/summary.txt", "w").write("\n".join(lines) + "\n")
 if bad:
     sys.exit("kro lane:\n" + "\n".join(bad))
 PY
