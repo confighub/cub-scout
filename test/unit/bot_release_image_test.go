@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -241,5 +242,271 @@ func TestBotImageInstallDocs(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("bot deployment image not found")
+	}
+}
+
+func TestBotRBACReadOnlyManifest(t *testing.T) {
+	data, err := os.ReadFile("../../examples/bot/rbac-readonly.yaml")
+	if err != nil {
+		t.Fatalf("read rbac-readonly.yaml: %v", err)
+	}
+
+	allowedVerbs := map[string]bool{
+		"get":   true,
+		"list":  true,
+		"watch": true,
+	}
+
+	decoder := yaml.NewDecoder(strings.NewReader(string(data)))
+	var saName, saNamespace string
+	var crName string
+	var crRuleCount int
+	var bindingFound bool
+
+	for {
+		var doc struct {
+			Kind     string `yaml:"kind"`
+			Metadata struct {
+				Name      string `yaml:"name"`
+				Namespace string `yaml:"namespace"`
+			} `yaml:"metadata"`
+			Rules []struct {
+				APIGroups []string `yaml:"apiGroups"`
+				Resources []string `yaml:"resources"`
+				Verbs     []string `yaml:"verbs"`
+			} `yaml:"rules"`
+			RoleRef struct {
+				Kind string `yaml:"kind"`
+				Name string `yaml:"name"`
+			} `yaml:"roleRef"`
+			Subjects []struct {
+				Kind      string `yaml:"kind"`
+				Name      string `yaml:"name"`
+				Namespace string `yaml:"namespace"`
+			} `yaml:"subjects"`
+		}
+		err := decoder.Decode(&doc)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("decode rbac-readonly.yaml: %v", err)
+		}
+
+		switch doc.Kind {
+		case "ServiceAccount":
+			saName = doc.Metadata.Name
+			saNamespace = doc.Metadata.Namespace
+		case "ClusterRole":
+			crName = doc.Metadata.Name
+			for i, rule := range doc.Rules {
+				crRuleCount++
+				if len(rule.Verbs) == 0 {
+					t.Errorf("ClusterRole %q rule %d has no verbs", crName, i)
+				}
+				for _, verb := range rule.Verbs {
+					if !allowedVerbs[verb] {
+						t.Errorf("ClusterRole %q rule %d (apiGroups=%v resources=%v) contains disallowed verb %q; only get, list, watch are permitted",
+							crName, i, rule.APIGroups, rule.Resources, verb)
+					}
+				}
+			}
+		case "ClusterRoleBinding":
+			bindingFound = true
+			if doc.RoleRef.Kind != "ClusterRole" || doc.RoleRef.Name != "cub-scout-bot" {
+				t.Errorf("ClusterRoleBinding roleRef = %s/%s, want ClusterRole/cub-scout-bot", doc.RoleRef.Kind, doc.RoleRef.Name)
+			}
+			if len(doc.Subjects) != 1 || doc.Subjects[0].Kind != "ServiceAccount" || doc.Subjects[0].Name != "cub-scout-bot" {
+				t.Errorf("ClusterRoleBinding subjects = %+v, want single ServiceAccount cub-scout-bot", doc.Subjects)
+			}
+		}
+	}
+
+	if saName != "cub-scout-bot" || saNamespace != "cub-scout" {
+		t.Fatalf("expected ServiceAccount cub-scout/cub-scout-bot, got %q/%q", saNamespace, saName)
+	}
+	if crName != "cub-scout-bot" || crRuleCount == 0 {
+		t.Fatalf("expected ClusterRole cub-scout-bot with rules, got name=%q rules=%d", crName, crRuleCount)
+	}
+	if !bindingFound {
+		t.Fatal("expected ClusterRoleBinding in examples/bot/rbac-readonly.yaml")
+	}
+}
+
+func TestBotDeploymentHardenedManifest(t *testing.T) {
+	data, err := os.ReadFile("../../examples/bot/deployment.yaml")
+	if err != nil {
+		t.Fatalf("read deployment.yaml: %v", err)
+	}
+
+	decoder := yaml.NewDecoder(strings.NewReader(string(data)))
+	found := false
+	for {
+		var doc struct {
+			Kind string `yaml:"kind"`
+			Spec struct {
+				Template struct {
+					Spec struct {
+						ServiceAccountName string `yaml:"serviceAccountName"`
+						SecurityContext    struct {
+							RunAsNonRoot   *bool `yaml:"runAsNonRoot"`
+							SeccompProfile struct {
+								Type string `yaml:"type"`
+							} `yaml:"seccompProfile"`
+						} `yaml:"securityContext"`
+						Containers []struct {
+							Name            string   `yaml:"name"`
+							Image           string   `yaml:"image"`
+							ImagePullPolicy string   `yaml:"imagePullPolicy"`
+							Args            []string `yaml:"args"`
+							Env             []struct {
+								Name string `yaml:"name"`
+							} `yaml:"env"`
+							SecurityContext struct {
+								RunAsNonRoot             *bool `yaml:"runAsNonRoot"`
+								ReadOnlyRootFilesystem   *bool `yaml:"readOnlyRootFilesystem"`
+								AllowPrivilegeEscalation *bool `yaml:"allowPrivilegeEscalation"`
+								Capabilities             struct {
+									Drop []string `yaml:"drop"`
+								} `yaml:"capabilities"`
+							} `yaml:"securityContext"`
+						} `yaml:"containers"`
+					} `yaml:"spec"`
+				} `yaml:"template"`
+			} `yaml:"spec"`
+		}
+		err := decoder.Decode(&doc)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("decode deployment.yaml: %v", err)
+		}
+		if doc.Kind != "Deployment" {
+			continue
+		}
+		found = true
+
+		podSpec := doc.Spec.Template.Spec
+		if podSpec.ServiceAccountName != "cub-scout-bot" {
+			t.Errorf("serviceAccountName = %q, want cub-scout-bot", podSpec.ServiceAccountName)
+		}
+		if podSpec.SecurityContext.SeccompProfile.Type != "RuntimeDefault" {
+			t.Errorf("pod seccompProfile.type = %q, want RuntimeDefault", podSpec.SecurityContext.SeccompProfile.Type)
+		}
+		if len(podSpec.Containers) == 0 {
+			t.Fatal("Deployment has no containers")
+		}
+		c := podSpec.Containers[0]
+		if c.Image != "ghcr.io/confighub/cub-scout:v3.0.0" {
+			t.Errorf("container image = %q, want ghcr.io/confighub/cub-scout:v3.0.0", c.Image)
+		}
+		if !slices.Contains(c.Args, "bot") || !slices.Contains(c.Args, "--watch-backed") {
+			t.Errorf("container args = %v, want [bot --watch-backed]", c.Args)
+		}
+		envNames := make([]string, 0, len(c.Env))
+		for _, e := range c.Env {
+			envNames = append(envNames, e.Name)
+		}
+		for _, requiredEnv := range []string{"CUB_SCOUT_BOT_WEBHOOK_URL", "CUB_SCOUT_BOT_INTERVAL", "CUB_SCOUT_BOT_NAMESPACE"} {
+			if !slices.Contains(envNames, requiredEnv) {
+				t.Errorf("deployment missing documented env var %q (have %v)", requiredEnv, envNames)
+			}
+		}
+		if c.SecurityContext.RunAsNonRoot == nil || !*c.SecurityContext.RunAsNonRoot {
+			t.Error("container securityContext.runAsNonRoot must be true")
+		}
+		if c.SecurityContext.ReadOnlyRootFilesystem == nil || !*c.SecurityContext.ReadOnlyRootFilesystem {
+			t.Error("container securityContext.readOnlyRootFilesystem must be true")
+		}
+		if c.SecurityContext.AllowPrivilegeEscalation == nil || *c.SecurityContext.AllowPrivilegeEscalation {
+			t.Error("container securityContext.allowPrivilegeEscalation must be false")
+		}
+		if !slices.Contains(c.SecurityContext.Capabilities.Drop, "ALL") {
+			t.Errorf("container capabilities.drop = %v, want ALL", c.SecurityContext.Capabilities.Drop)
+		}
+	}
+	if !found {
+		t.Fatal("Deployment not found in examples/bot/deployment.yaml")
+	}
+}
+
+func TestBotMultiArchContainerReleaseConfig(t *testing.T) {
+	goreleaserBytes, err := os.ReadFile("../../.goreleaser.yaml")
+	if err != nil {
+		t.Fatalf("read .goreleaser.yaml: %v", err)
+	}
+	var cfg struct {
+		Dockers []struct {
+			Goos               string   `yaml:"goos"`
+			Goarch             string   `yaml:"goarch"`
+			Use                string   `yaml:"use"`
+			ImageTemplates     []string `yaml:"image_templates"`
+			BuildFlagTemplates []string `yaml:"build_flag_templates"`
+		} `yaml:"dockers"`
+		DockerManifests []struct {
+			NameTemplate   string   `yaml:"name_template"`
+			ImageTemplates []string `yaml:"image_templates"`
+		} `yaml:"docker_manifests"`
+	}
+	if err := yaml.Unmarshal(goreleaserBytes, &cfg); err != nil {
+		t.Fatalf("parse .goreleaser.yaml: %v", err)
+	}
+
+	seenArch := map[string]bool{}
+	for _, d := range cfg.Dockers {
+		if d.Goos != "linux" {
+			continue
+		}
+		seenArch[d.Goarch] = true
+		if d.Use != "buildx" {
+			t.Errorf("docker build for linux/%s must set use: buildx, got %q", d.Goarch, d.Use)
+		}
+		wantPlatform := "--platform=linux/" + d.Goarch
+		if !slices.Contains(d.BuildFlagTemplates, wantPlatform) {
+			t.Errorf("docker build for linux/%s missing %q in build_flag_templates: %v", d.Goarch, wantPlatform, d.BuildFlagTemplates)
+		}
+	}
+	for _, arch := range []string{"amd64", "arm64"} {
+		if !seenArch[arch] {
+			t.Errorf(".goreleaser.yaml missing linux/%s docker build", arch)
+		}
+	}
+
+	manifestByName := map[string][]string{}
+	for _, m := range cfg.DockerManifests {
+		manifestByName[m.NameTemplate] = m.ImageTemplates
+	}
+	for _, tc := range []struct {
+		name  string
+		needs []string
+	}{
+		{
+			name:  "ghcr.io/confighub/cub-scout:{{ .Tag }}",
+			needs: []string{"ghcr.io/confighub/cub-scout:{{ .Tag }}-amd64", "ghcr.io/confighub/cub-scout:{{ .Tag }}-arm64"},
+		},
+		{
+			name:  "ghcr.io/confighub/cub-scout:latest",
+			needs: []string{"ghcr.io/confighub/cub-scout:latest-amd64", "ghcr.io/confighub/cub-scout:latest-arm64"},
+		},
+	} {
+		images, ok := manifestByName[tc.name]
+		if !ok {
+			t.Errorf(".goreleaser.yaml missing docker_manifests entry %q", tc.name)
+			continue
+		}
+		for _, want := range tc.needs {
+			if !slices.Contains(images, want) {
+				t.Errorf("docker_manifests %q missing %q (have %v)", tc.name, want, images)
+			}
+		}
+	}
+
+	dockerfileBytes, err := os.ReadFile("../../Dockerfile")
+	if err != nil {
+		t.Fatalf("read Dockerfile: %v", err)
+	}
+	if !strings.Contains(string(dockerfileBytes), `ENTRYPOINT ["/cub-scout"]`) {
+		t.Error(`Dockerfile must set ENTRYPOINT ["/cub-scout"] so Kubernetes args ["bot", "--watch-backed"] invoke cub-scout bot cleanly`)
 	}
 }

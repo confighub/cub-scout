@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cub-scout
+  labels:
+    app.kubernetes.io/name: cub-scout-bot
+    app.kubernetes.io/part-of: cub-scout
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cub-scout-bot
+  namespace: cub-scout
+  labels:
+    app.kubernetes.io/name: cub-scout-bot
+    app.kubernetes.io/part-of: cub-scout
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cub-scout-bot
+  labels:
+    app.kubernetes.io/name: cub-scout-bot
+    app.kubernetes.io/part-of: cub-scout
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "endpoints", "events", "namespaces", "nodes", "pods", "services", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets", "deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["cronjobs", "jobs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications", "applicationsets", "appprojects"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["source.toolkit.fluxcd.io"]
+    resources: ["buckets", "externalartifacts", "gitrepositories", "helmcharts", "helmrepositories", "ocirepositories"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+    resources: ["kustomizations"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["helm.toolkit.fluxcd.io"]
+    resources: ["helmreleases"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["fluxcd.controlplane.io"]
+    resources: ["fluxinstances", "fluxreports", "resourcesetinputproviders", "resourcesets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["source.extensions.fluxcd.io"]
+    resources: ["artifactgenerators"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["config.projectsveltos.io"]
+    resources: ["clusterconfigurations", "clusterprofiles", "clusterpromotions", "clusterreports", "clustersummaries", "profiles"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["lib.projectsveltos.io"]
+    resources: ["clusterhealthchecks", "eventreports", "eventsources", "eventtriggers", "healthcheckreports"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["modelplane.ai"]
+    resources: ["inferenceclasses", "inferenceclusters", "inferencegateways", "modelcaches", "modeldeployments", "modelendpoints", "modelreplicas", "modelservices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["infrastructure.modelplane.ai"]
+    resources: ["eksclusters", "gkeclusters", "servingstacks"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cub-scout-bot
+  labels:
+    app.kubernetes.io/name: cub-scout-bot
+    app.kubernetes.io/part-of: cub-scout
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cub-scout-bot
+subjects:
+  - kind: ServiceAccount
+    name: cub-scout-bot
+    namespace: cub-scout

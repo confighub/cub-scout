@@ -144,12 +144,37 @@ dockers:
     goarch: amd64
     ids:
       - cub-scout
+    use: buildx
     image_templates:
-      - "ghcr.io/confighub/cub-scout:{{ .Tag }}"
-      - "ghcr.io/confighub/cub-scout:latest"
+      - "ghcr.io/confighub/cub-scout:{{ .Tag }}-amd64"
+      - "ghcr.io/confighub/cub-scout:latest-amd64"
     dockerfile: Dockerfile
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.source={{ .GitURL }}"
+  - goos: linux
+    goarch: arm64
+    ids:
+      - cub-scout
+    use: buildx
+    image_templates:
+      - "ghcr.io/confighub/cub-scout:{{ .Tag }}-arm64"
+      - "ghcr.io/confighub/cub-scout:latest-arm64"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source={{ .GitURL }}"
+
+docker_manifests:
+  - name_template: "ghcr.io/confighub/cub-scout:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/confighub/cub-scout:{{ .Tag }}-amd64"
+      - "ghcr.io/confighub/cub-scout:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/confighub/cub-scout:latest"
+    image_templates:
+      - "ghcr.io/confighub/cub-scout:latest-amd64"
+      - "ghcr.io/confighub/cub-scout:latest-arm64"
