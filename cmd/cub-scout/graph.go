@@ -19,7 +19,8 @@ var graphCmd = &cobra.Command{
 	Long: `Resource graph operations for exploring cluster relationships.
 
 Available subcommands:
-  export    Export the resource graph as JSON, DOT, SVG, or HTML`,
+  export        Export the resource graph as JSON, DOT, SVG, or HTML
+  blast-radius  Compute offline dependency blast radius from a recorded snapshot`,
 }
 
 var graphExportCmd = &cobra.Command{
