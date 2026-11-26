@@ -82,7 +82,8 @@ func TestGraphAndSnapshotExplicitContextRoutesSelectedReads(t *testing.T) {
 			if name == "graph" {
 				require.Len(t, requests, 3)
 			} else {
-				require.Len(t, requests, 13)
+				require.Len(t, requests, 14)
+				require.Contains(t, requests, "/apis/argoproj.io/v1alpha1/namespaces/team-a/rollouts")
 			}
 			after, err := os.ReadFile(path)
 			require.NoError(t, err)
