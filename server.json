@@ -6,11 +6,11 @@
     "url": "https://github.com/confighub/cub-scout",
     "source": "github"
   },
-  "version": "3.0.0",
+  "version": "3.1.0",
   "packages": [
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/confighub/cub-scout:v3.0.0",
+      "identifier": "ghcr.io/confighub/cub-scout:v3.1.0",
       "transport": {
         "type": "stdio"
       }

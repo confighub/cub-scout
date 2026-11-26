@@ -217,16 +217,18 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v3.0.0 is the latest published release.** Ships `cub scout landed` (with
+**v3.1.0 is the latest published release.** Completes the strictly read-only
+agent write loop with `cub scout before-write` (CLI + MCP), offline Ed25519
+`receipt sign`/`verify`, offline `trace --recording` + sanitized Pod/PDB
+snapshots, standard `answer` envelopes on `watch` and `bot`, a multi-arch GHCR
+bot deploy kit, Argo Rollouts parity, and ephemeral offline `graph blast-radius`
+— building on [v3.0.0](docs/releases/v3.0.0.md)'s `cub scout landed` (with
 `--verify-pod-images`, bounded read-only `--wait`, and Flux/Argo CD/Helm/kro/Crossplane
 parity), secret-stripped `cub scout snapshot` + offline `--recording`, field
 writer-contention and revert prediction, `--if-unchanged` delta answers,
 `--view summary`, and CI-enforced byte ceilings (99.78% smaller answers in
-[answer-sizes.md](docs/reference/answer-sizes.md)). On `main` toward
-[v3.1.0 (draft)](docs/releases/v3.1.0.md): `cub scout before-write`, offline
-Ed25519 `receipt sign`/`verify`, offline `trace --recording`, and standard
-`answer` envelopes on `watch` and `bot`. See the
-[v3.0.0 release notes](docs/releases/v3.0.0.md) and
+[answer-sizes.md](docs/reference/answer-sizes.md)). See the
+[v3.1.0 release notes](docs/releases/v3.1.0.md) and
 [agent write-loop guide](docs/howto/agent-write-loop.md).
 
 **v2.19.0** (`release check` under Flux): `release check` under Flux now says
