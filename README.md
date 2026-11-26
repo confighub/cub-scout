@@ -46,6 +46,7 @@ MCP client at `cub-scout mcp serve`, a local read-only stdio server.
 
 [v3.0.0 release](https://github.com/confighub/cub-scout/releases/tag/v3.0.0)
 | [Start here](docs/getting-started/start-here.md)
+| [Agent write loop](docs/howto/agent-write-loop.md)
 | [Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
 | [Answer sizes (99.78% smaller)](docs/reference/answer-sizes.md)
@@ -75,6 +76,13 @@ visible; a healthy Pod is not proof that the intended release was delivered.
 - **Tracing and ownership map:** explore resources across Argo CD, Flux, Helm, Sveltos,
   Modelplane, Crossplane, kro, ConfigHub, and native Kubernetes. Evidence depth
   depends on the controller and available metadata.
+- **Full read-only agent write loop:** check ownership, revert risk, sync windows,
+  writer contention, and PDBs before writing (`cub scout before-write`), verify
+  that an anchored revision actually reached running Pod `imageID`s after writing
+  (`cub scout landed --verify-pod-images`), run the same checks air-gapped from a
+  secret-stripped capture (`cub scout snapshot` + `--recording`), and sign/verify
+  offline Ed25519 proof (`cub scout receipt sign` / `receipt verify`). See the
+  [agent write-loop guide](docs/howto/agent-write-loop.md).
 - **Dig into deeper explanations where possible:** controller progress, workload
   symptoms, source revisions, field differences, and the next read-only checks.
 - **Data and machine friendly outputs:** JSON for scripts and MCP tools for agents, plus
@@ -209,7 +217,19 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v2.19.0 is the latest release.** `release check` under Flux now says
+**v3.0.0 is the latest published release.** Ships `cub scout landed` (with
+`--verify-pod-images`, bounded read-only `--wait`, and Flux/Argo CD/Helm/kro/Crossplane
+parity), secret-stripped `cub scout snapshot` + offline `--recording`, field
+writer-contention and revert prediction, `--if-unchanged` delta answers,
+`--view summary`, and CI-enforced byte ceilings (99.78% smaller answers in
+[answer-sizes.md](docs/reference/answer-sizes.md)). On `main` toward
+[v3.1.0 (draft)](docs/releases/v3.1.0.md): `cub scout before-write`, offline
+Ed25519 `receipt sign`/`verify`, offline `trace --recording`, and standard
+`answer` envelopes on `watch` and `bot`. See the
+[v3.0.0 release notes](docs/releases/v3.0.0.md) and
+[agent write-loop guide](docs/howto/agent-write-loop.md).
+
+**v2.19.0** (`release check` under Flux): `release check` under Flux now says
 "not yet" (`WATCH`) when the source is on another revision, as it does for
 Argo CD, and `release check` now runs on a real cluster in CI. See the
 [v2.19.0 release notes](docs/releases/v2.19.0.md).
@@ -362,7 +382,7 @@ Each command's **Inputs** column tells you exactly what it needs — cluster onl
 | `tree` | Runtime, ownership, git, and composition hierarchies | cluster |
 | `scan` | Audit live cluster or manifest files against 46 built-in risk patterns | cluster *or* file |
 | `graph export` | Resource graph as DOT/JSON | cluster |
-| `snapshot` | Dump cluster state as GSF JSON | cluster |
+| `snapshot` | Dump cluster state as GSF JSON or bounded, secret-stripped YAML/JSON (`--format yaml\|json`) for offline `--recording` replay | cluster |
 | `watch` | Stream observation events to webhook/file sinks | cluster |
 | `bot` | Run the watch engine continuously as an in-cluster observer | cluster |
 | `status` | Connection mode and cluster context info | cluster |
@@ -371,6 +391,7 @@ Each command's **Inputs** column tells you exactly what it needs — cluster onl
 
 | Command | What you get | Inputs |
 |---|---|---|
+| `before-write <kind>/<name>` | Read-only pre-write safety check: ownership, live field value, writer contention, Flux `suspend` / Argo `syncWindows` / `selfHeal` revert risk, and matching PDBs (`< 1 KB`; supports `--recording`) | cluster *or* `--recording` snapshot |
 | `explain` | Plain-English ownership and lineage for one resource, with phase-aware next-step hints and optional object-correlated ConfigHub delivery evidence | cluster; optional ConfigHub auth for `--with-confighub` |
 | `debug` | Guided GitOps debugging wizard | cluster |
 | `suggest-remedy` | Read-only description of a remediation that *would* resolve a finding — never applies it | cluster |
@@ -397,6 +418,7 @@ cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `c
 
 | Command | What you get | Inputs |
 |---|---|---|
+| `landed <kind>/<name>` | Verify whether an anchored `--revision`, `--digest`, or `--unit-revision` reached the workload across Flux, Argo CD, Helm, kro, and Crossplane; add `--verify-pod-images` to verify running Pod `imageID` digests, `--wait` for bounded read-only polling, `--if-unchanged` for delta answers, or `--recording` for offline replay | cluster *or* `--recording` snapshot |
 | `receipt verify <kind>/<name>` | Build a typed, fingerprinted receipt asserting a resource predicate. Predicates include `applied-matches-spec`, `source-truth-pass`, `no-manual-edits-since`, `object-set-matches`, `workloads-converged`, and `prerequisites-met`. Add `--with-confighub` to attach bounded, object-correlated delivery evidence as supporting evidence; it does not change which system owns delivery or application-health truth. Verdicts: PASS / WATCH / BLOCK / INCONCLUSIVE. | cluster (+ ConfigHub for `source-truth-pass` and optional `--with-confighub`) |
 | `receipt verify --file <path> --scope namespace/<ns>` | Build an install/object-set receipt (`object-set-matches`) proving every desired object in rendered YAML is present live and every authored field still matches. Add `--predicate workloads-converged` to prove rendered workloads reached a ready runtime state, with `--grace-window` measured from current-generation progress signals. | cluster + rendered YAML |
 | `receipt verify --fail-on <verdict>` | Same, plus CI-gate exit semantics: exit 2 when the receipt's verdict matches the listed set (`WATCH` / `BLOCK` / `INCONCLUSIVE` / `any-non-pass`). Artifact is preserved on fail. | cluster |
@@ -404,6 +426,7 @@ cub-scout receipts (#446) are the **persistence** sibling of `compare`: where `c
 | `receipt show <path>` | Render a saved receipt (ASCII or JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection. | receipt file |
 | `receipt validate <path>` | Recompute and compare the receipt's fingerprint. Exit 0 OK / 1 mismatch / 2 I/O. | receipt file |
 | `receipt list` | Walk the local store (`$CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME/cub-scout/receipts → $HOME/.local/share/cub-scout/receipts`) newest first, with freshness status for saved TTL-backed receipts. | local store |
+| `receipt sign` / `receipt keygen` / `receipt verify --input <file> --pubkey <pub.pem>` | Offline Ed25519 signing and verification (`signed-receipt/v1`) for `receipt/v1` and `landed` JSON payloads with zero network or cluster calls | receipt/landed JSON + local PEM key |
 | `watch --emit-receipt-on <event-types>` | Real-time receipt emission: each matching watch event carries a receipt inline. All four known event types build receipts (`drift.detected`, `ownership.changed`, `resource.discovered`, `scan.finding`); per-poll backpressure controlled by `--emit-receipt-batch-cap` (default 10). | cluster |
 
 Wire format: in-toto Statement v1 (`_type = "https://in-toto.io/Statement/v1"`) wrapping `https://cub-scout.dev/receipt/v1`. SHA-256 fingerprint over RFC 8785 canonical JSON of the full Statement minus only `predicate.fingerprint`. Read-only by construction — receipts emit artifacts, never mutate.
@@ -647,6 +670,7 @@ Honest gaps in the current capability map, with the leverage on filling them:
 | Getting started checklist | [docs/getting-started/checklist.md](docs/getting-started/checklist.md) |
 | Import and migration path | [docs/howto/import-to-confighub.md](docs/howto/import-to-confighub.md) |
 | Delivery readiness decision and live-delivery fixture | [docs/howto/delivery-readiness-decision.md](docs/howto/delivery-readiness-decision.md) + [examples/live-delivery-observability/](examples/live-delivery-observability/) |
+| Agent write loop (`before-write`, `landed --verify-pod-images`, `--recording`, Ed25519 `receipt sign`/`verify`) | [docs/howto/agent-write-loop.md](docs/howto/agent-write-loop.md) |
 | AI tool integration | [docs/howto/using-cub-scout-from-ai-tool.md](docs/howto/using-cub-scout-from-ai-tool.md) |
 | Examples and demos | [examples/README.md](examples/README.md) |
 | Receipts (typed evidence artifacts) | [examples/receipts/README.md](examples/receipts/README.md) + [docs/reference/json-contracts.md § Receipt Contract](docs/reference/json-contracts.md) |
