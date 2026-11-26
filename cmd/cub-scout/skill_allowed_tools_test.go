@@ -52,6 +52,7 @@ var readOnlyScoutPaths = map[string]bool{
 	"gitops settings":           true,
 	"gitops status":             true,
 	"graph":                     true,
+	"graph blast-radius":        true,
 	"graph explain":             true,
 	"graph export":              true,
 	"help":                      true,
