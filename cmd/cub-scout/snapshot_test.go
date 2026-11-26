@@ -573,6 +573,7 @@ func newFakeSnapshotDynamicClient(objs ...runtime.Object) *dynamicfake.FakeDynam
 		{Group: "apps", Version: "v1", Resource: "daemonsets"}:                       "DaemonSetList",
 		{Group: "batch", Version: "v1", Resource: "jobs"}:                            "JobList",
 		{Group: "batch", Version: "v1", Resource: "cronjobs"}:                        "CronJobList",
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "rollouts"}:            "RolloutList",
 		{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}: "KustomizationList",
 		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}:        "HelmReleaseList",
 		{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}:   "GitRepositoryList",
@@ -1046,5 +1047,54 @@ func TestSnapshotRecording_PodSanitizationAndPDBCapture(t *testing.T) {
 		if len(snap.Objects) != 2 {
 			t.Fatalf("round-trip(%s) len(Objects) = %d, want 2", format, len(snap.Objects))
 		}
+	}
+}
+
+func TestSnapshotRecording_ArgoRolloutCapture(t *testing.T) {
+	rollout := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "argoproj.io/v1alpha1",
+			"kind":       "Rollout",
+			"metadata": map[string]interface{}{
+				"name":       "checkout",
+				"namespace":  "shop",
+				"generation": int64(2),
+				"labels": map[string]interface{}{
+					"argocd.argoproj.io/instance": "checkout-app",
+				},
+			},
+			"spec": map[string]interface{}{
+				"replicas": int64(2),
+			},
+			"status": map[string]interface{}{
+				"observedGeneration": "2",
+				"phase":              "Healthy",
+			},
+		},
+	}
+
+	dynClient := newFakeSnapshotDynamicClient(rollout)
+	captured, truncated, err := collectRecordedSnapshotObjects(context.Background(), dynClient, "shop", "Rollout", 200)
+	if err != nil {
+		t.Fatalf("collectRecordedSnapshotObjects failed: %v", err)
+	}
+	if truncated || len(captured) != 1 {
+		t.Fatalf("captured=%d truncated=%v, want 1/false", len(captured), truncated)
+	}
+	if captured[0].GetAPIVersion() != "argoproj.io/v1alpha1" || captured[0].GetKind() != "Rollout" || captured[0].GetName() != "checkout" {
+		t.Fatalf("unexpected captured rollout: %s %s/%s", captured[0].GetAPIVersion(), captured[0].GetKind(), captured[0].GetName())
+	}
+
+	var buf bytes.Buffer
+	observedAt := time.Date(2026, 11, 25, 12, 0, 0, 0, time.UTC)
+	if err := encodeRecordedSnapshot(&buf, snapshotFormatYAML, captured, observedAt, "rollout-cluster", false); err != nil {
+		t.Fatalf("encodeRecordedSnapshot failed: %v", err)
+	}
+	snap, err := loadRecordedObjectSnapshot(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("loadRecordedObjectSnapshot failed: %v", err)
+	}
+	if len(snap.Objects) != 1 || snap.Objects[0].GetKind() != "Rollout" {
+		t.Fatalf("expected 1 Rollout after round-trip, got %d", len(snap.Objects))
 	}
 }

@@ -795,6 +795,8 @@ func normalizeKind(kind string) string {
 		return "ProviderConfig"
 	case "app", "application", "applications":
 		return "Application"
+	case "ro", "rollout", "rollouts":
+		return "Rollout"
 	default:
 		// Capitalize first letter
 		if len(kind) > 0 {
@@ -955,6 +957,8 @@ func kindToGVR(kind string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "buckets"}
 	case "Application":
 		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
+	case "Rollout":
+		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "rollouts"}
 	default:
 		if spec, ok := controllerResourceByKind(kind); ok {
 			return spec.GVR

@@ -105,7 +105,8 @@ By default (--format gsf), outputs GitOps State Format (GSF) JSON with ownership
 and optional relationships.
 
 With --format yaml or --format json, captures a bounded, sanitized offline
-recording of workloads (Deployment, StatefulSet, DaemonSet, Job, CronJob),
+recording of workloads (Deployment, StatefulSet, DaemonSet, Job, CronJob,
+Argo Rollout),
 GitOps controller objects (Flux Kustomization/HelmRelease/GitRepository/OCIRepository,
 Argo CD Application, and Helm release Secrets with Secret.data and Secret.stringData
 strictly stripped), policy/v1 PodDisruptionBudgets, and strictly sanitized core/v1
@@ -228,6 +229,7 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 		{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"},
 		// Argo resources
 		{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"},
+		{Group: "argoproj.io", Version: "v1alpha1", Resource: "rollouts"},
 	}
 
 	// Store raw items for relation building
@@ -703,6 +705,7 @@ func recordedSnapshotResources() []snapshotResourceSpec {
 		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"}, Kind: "DaemonSet"},
 		{GVR: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}, Kind: "Job"},
 		{GVR: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}, Kind: "CronJob"},
+		{GVR: schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "rollouts"}, Kind: "Rollout"},
 		// Flux controllers & sources
 		{GVR: schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}, Kind: "Kustomization"},
 		{GVR: schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}, Kind: "HelmRelease"},
