@@ -599,6 +599,13 @@ func extractPodTemplateLabels(obj *unstructured.Unstructured) map[string]string 
 		if err == nil && found && len(l) > 0 {
 			return l
 		}
+	case "Rollout":
+		if l, found, err := unstructured.NestedStringMap(obj.Object, "spec", "template", "metadata", "labels"); err == nil && found && len(l) > 0 {
+			return l
+		}
+		if l, found, err := unstructured.NestedStringMap(obj.Object, "spec", "selector", "matchLabels"); err == nil && found && len(l) > 0 {
+			return l
+		}
 	default:
 		l, found, err := unstructured.NestedStringMap(obj.Object, "spec", "template", "metadata", "labels")
 		if err == nil && found && len(l) > 0 {

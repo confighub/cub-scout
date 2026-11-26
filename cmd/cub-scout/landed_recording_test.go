@@ -834,3 +834,209 @@ func TestLandedOfflineRecording_Sveltos(t *testing.T) {
 	require.Contains(t, out.Answer.Unknowns[0].Reason, "Sveltos")
 	require.Contains(t, out.Answer.Unknowns[0].Reason, "Git or OCI")
 }
+
+const recordedArgoRolloutLandingYAML = `apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: checkout
+  namespace: shop
+  generation: 3
+  labels:
+    argocd.argoproj.io/instance: checkout-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+        - name: checkout
+          image: ghcr.io/org/checkout:v2.0.0
+status:
+  observedGeneration: "3"
+  phase: Healthy
+  message: Rollout is healthy
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: checkout-paused
+  namespace: shop
+  generation: 3
+  labels:
+    argocd.argoproj.io/instance: checkout-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout-paused
+status:
+  observedGeneration: "3"
+  phase: Paused
+  message: CanaryPauseStep
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: checkout-progressing
+  namespace: shop
+  generation: 3
+  labels:
+    argocd.argoproj.io/instance: checkout-app
+spec:
+  replicas: 2
+status:
+  observedGeneration: "3"
+  phase: Progressing
+  message: ReplicaSet updated
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: checkout-lag
+  namespace: shop
+  generation: 4
+  labels:
+    argocd.argoproj.io/instance: checkout-app
+spec:
+  replicas: 2
+status:
+  observedGeneration: "3"
+  phase: Healthy
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: checkout-degraded
+  namespace: shop
+  generation: 3
+  labels:
+    argocd.argoproj.io/instance: checkout-app
+spec:
+  replicas: 2
+status:
+  observedGeneration: "3"
+  phase: Degraded
+  message: ProgressDeadlineExceeded
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: checkout-app
+  namespace: argocd
+status:
+  sync:
+    status: Synced
+    revision: a1b2c3d4e5f6789012345678901234567890abcd
+  health:
+    status: Healthy
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: checkout-pod-1
+  namespace: shop
+  labels:
+    app: checkout
+status:
+  phase: Running
+  containerStatuses:
+    - name: checkout
+      image: ghcr.io/org/checkout:v2.0.0
+      imageID: docker-pullable://ghcr.io/org/checkout@sha256:aaaa1111bbbb2222
+`
+
+func TestLandedOfflineRecording_ArgoRollout(t *testing.T) {
+	// Verify parseLandedTarget canonicalization for ro/rollout/rollouts.
+	for _, args := range [][]string{
+		{"ro/checkout"},
+		{"rollout/checkout"},
+		{"rollouts", "checkout"},
+	} {
+		ref, err := parseLandedTarget(args, "shop")
+		require.NoError(t, err)
+		require.Equal(t, "argoproj.io/v1alpha1", ref.APIVersion)
+		require.Equal(t, "Rollout", ref.Kind)
+		require.Equal(t, "shop", ref.Namespace)
+		require.Equal(t, "checkout", ref.Name)
+	}
+
+	recorded, err := loadRecordedObjectSnapshot(strings.NewReader(recordedArgoRolloutLandingYAML))
+	require.NoError(t, err)
+	store := recordedLandingStore{objects: recorded.Objects}
+	anchor := agent.LandingAnchor{Kind: agent.AnchorKindGitSHA, Value: "a1b2c3d4e5f6789012345678901234567890abcd"}
+
+	// 1. Healthy Rollout with observedGeneration == generation -> landed.
+	healthyRef, err := parseLandedTarget([]string{"ro/checkout"}, "shop")
+	require.NoError(t, err)
+	healthySnap := fetchLandingSnapshotFromStore(context.Background(), store, "", healthyRef)
+	healthyEval := agent.EvaluateLanding(anchor, healthySnap)
+	require.Equal(t, agent.LandingStateLanded, healthyEval.State)
+	require.Equal(t, agent.LandingReasonRevisionAndWorkloadConverged, healthyEval.Reason)
+	requireConformingAnswer(t, buildLandedOutput(healthyEval, nil).Answer, landedStates, landedReasons)
+
+	// 2. Paused canary Rollout -> converging (never false landed!).
+	pausedRef, err := parseLandedTarget([]string{"rollout/checkout-paused"}, "shop")
+	require.NoError(t, err)
+	pausedSnap := fetchLandingSnapshotFromStore(context.Background(), store, "", pausedRef)
+	pausedEval := agent.EvaluateLanding(anchor, pausedSnap)
+	require.Equal(t, agent.LandingStateConverging, pausedEval.State)
+	require.Equal(t, agent.LandingReasonWorkloadRollingOut, pausedEval.Reason)
+	requireConformingAnswer(t, buildLandedOutput(pausedEval, nil).Answer, landedStates, landedReasons)
+
+	// 3. Progressing Rollout -> converging.
+	progRef, err := parseLandedTarget([]string{"rollouts", "checkout-progressing"}, "shop")
+	require.NoError(t, err)
+	progSnap := fetchLandingSnapshotFromStore(context.Background(), store, "", progRef)
+	progEval := agent.EvaluateLanding(anchor, progSnap)
+	require.Equal(t, agent.LandingStateConverging, progEval.State)
+	require.Equal(t, agent.LandingReasonWorkloadRollingOut, progEval.Reason)
+
+	// 4. Healthy phase with observedGeneration lag -> converging (never false landed!).
+	lagRef, err := parseLandedTarget([]string{"ro/checkout-lag"}, "shop")
+	require.NoError(t, err)
+	lagSnap := fetchLandingSnapshotFromStore(context.Background(), store, "", lagRef)
+	lagEval := agent.EvaluateLanding(anchor, lagSnap)
+	require.Equal(t, agent.LandingStateConverging, lagEval.State)
+	require.Equal(t, agent.LandingReasonWorkloadRollingOut, lagEval.Reason)
+
+	// 5. Degraded Rollout -> not-landed (workload-failed).
+	degRef, err := parseLandedTarget([]string{"rollout/checkout-degraded"}, "shop")
+	require.NoError(t, err)
+	degSnap := fetchLandingSnapshotFromStore(context.Background(), store, "", degRef)
+	degEval := agent.EvaluateLanding(anchor, degSnap)
+	require.Equal(t, agent.LandingStateNotLanded, degEval.State)
+	require.Equal(t, agent.LandingReasonWorkloadFailed, degEval.Reason)
+	require.NotNil(t, degEval.BrokenLink)
+	require.Equal(t, agent.LandingStageWorkload, degEval.BrokenLink.Stage)
+	requireConformingAnswer(t, buildLandedOutput(degEval, nil).Answer, landedStates, landedReasons)
+
+	// 6. --verify-pod-images positive match on Healthy Rollout -> landed.
+	podOKSnap := fetchLandingSnapshotFromStoreWithOptions(context.Background(), store, "", healthyRef, landingPodVerifyOptions{
+		Verify:        true,
+		ExpectedImage: "sha256:aaaa1111bbbb2222",
+	})
+	podOKEval := agent.EvaluateLanding(anchor, podOKSnap)
+	require.Equal(t, agent.LandingStateLanded, podOKEval.State)
+	require.NotNil(t, podOKSnap.PodImages)
+	require.Equal(t, "ready", podOKSnap.PodImages.Status)
+
+	// 7. --verify-pod-images mismatch on Healthy Rollout -> not-landed (workload-failed).
+	podBadSnap := fetchLandingSnapshotFromStoreWithOptions(context.Background(), store, "", healthyRef, landingPodVerifyOptions{
+		Verify:        true,
+		ExpectedImage: "sha256:0000000000000000",
+	})
+	podBadEval := agent.EvaluateLanding(anchor, podBadSnap)
+	require.Equal(t, agent.LandingStateNotLanded, podBadEval.State)
+	require.Equal(t, agent.LandingReasonWorkloadFailed, podBadEval.Reason)
+	require.NotNil(t, podBadEval.BrokenLink)
+	require.Equal(t, agent.LandingStageWorkload, podBadEval.BrokenLink.Stage)
+	require.NotNil(t, podBadEval.BrokenLink.Ref)
+	require.Equal(t, "Pod", podBadEval.BrokenLink.Ref.Kind)
+	require.Equal(t, "checkout-pod-1", podBadEval.BrokenLink.Ref.Name)
+	requireConformingAnswer(t, buildLandedOutput(podBadEval, nil).Answer, landedStates, landedReasons)
+}

@@ -1312,7 +1312,11 @@ deadline expires, and records `wait.requestedSeconds`, `wait.elapsedMillis`,
 `pods`) and compares `status.containerStatuses[].imageID` and `image`; a
 mismatch returns `not-landed` / `workload-failed` (`brokenLink.stage: "workload"`)
 even when the controller reports Ready, and Pod list RBAC denial returns
-`not-observable` / `read-denied`. The `answer` block is bounded under 700 bytes in CI.
+`not-observable` / `read-denied`. Supported workload kinds include `Deployment`,
+`StatefulSet`, `DaemonSet`, `Job`, `CronJob`, and Argo `Rollout`
+(`argoproj.io/v1alpha1`, where `Paused`, `Progressing`, or generation lag
+returns `converging` / `workload-rolling-out`, and `Degraded` returns
+`not-landed` / `workload-failed`). The `answer` block is bounded under 700 bytes in CI.
 
 ## GitOps Controller Coverage Contract
 

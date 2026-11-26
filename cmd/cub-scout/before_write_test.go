@@ -462,3 +462,100 @@ func TestBeforeWrite_MCPToolRegistrationAndBuildArgs(t *testing.T) {
 	_, err := tool.BuildArgs(map[string]interface{}{"resource": "deploy/api", "field_path": "spec.replicas"})
 	require.Error(t, err)
 }
+
+func TestBeforeWrite_RecordingOfflineCLI_ArgoRollout(t *testing.T) {
+	recordingYAML := `# observedAt: 2026-11-25T12:00:00Z
+# sourceContext: kind-rollouts
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: checkout
+  namespace: shop
+  labels:
+    argocd.argoproj.io/instance: checkout-app
+  managedFields:
+    - manager: argocd-controller
+      operation: Apply
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:replicas: {}
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: checkout-app
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: checkout-pdb
+  namespace: shop
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: checkout
+`
+	tmpDir := t.TempDir()
+	recPath := filepath.Join(tmpDir, "rollout-snapshot.yaml")
+	require.NoError(t, os.WriteFile(recPath, []byte(recordingYAML), 0o600))
+
+	origNS, origFP, origRec, origCtx, origFmt := beforeWriteNamespace, beforeWriteFieldPath, beforeWriteRecording, beforeWriteKubeContext, beforeWriteFormat
+	t.Cleanup(func() {
+		beforeWriteNamespace, beforeWriteFieldPath, beforeWriteRecording, beforeWriteKubeContext, beforeWriteFormat = origNS, origFP, origRec, origCtx, origFmt
+		beforeWriteCmd.SetOut(os.Stdout)
+	})
+
+	beforeWriteNamespace = "shop"
+	beforeWriteFieldPath = ".spec.replicas"
+	beforeWriteRecording = recPath
+	beforeWriteKubeContext = ""
+	beforeWriteFormat = "json"
+	beforeWriteCmd.Flags().Lookup("kube-context").Changed = false
+
+	var outBuf bytes.Buffer
+	beforeWriteCmd.SetOut(&outBuf)
+
+	require.NoError(t, runBeforeWrite(beforeWriteCmd, []string{"ro/checkout"}))
+
+	var decoded beforeWriteOutput
+	require.NoError(t, json.Unmarshal(outBuf.Bytes(), &decoded))
+	require.Equal(t, "kind-rollouts", decoded.Context)
+	require.Equal(t, "Rollout", decoded.Target.Kind)
+	require.Equal(t, "checkout", decoded.Target.Name)
+	require.Equal(t, "shop", decoded.Target.Namespace)
+	require.Equal(t, agent.OwnerArgo, decoded.Owner.Type)
+	require.NotNil(t, decoded.Deployer)
+	require.NotNil(t, decoded.Deployer.SelfHeal)
+	require.True(t, *decoded.Deployer.SelfHeal)
+	require.NotNil(t, decoded.FieldAttribution)
+	require.NotNil(t, decoded.FieldAttribution.RevertPrediction)
+	require.Equal(t, agent.RevertVerdictLikelyReverted, decoded.FieldAttribution.RevertPrediction.Verdict)
+	require.Equal(t, agent.RevertReasonArgoSelfHealEnabled, decoded.FieldAttribution.RevertPrediction.Reason)
+	require.Len(t, decoded.PDBs, 1)
+	require.Equal(t, "checkout-pdb", decoded.PDBs[0].Name)
+	require.NotNil(t, decoded.Answer)
+	requireConformingAnswer(t, decoded.Answer, explainStates, explainReasons)
+	require.Equal(t, explainStateExplained, decoded.Answer.State)
+	require.Equal(t, "offline-recording", decoded.Answer.Cost.Coverage)
+
+	rawAns, err := json.Marshal(decoded.Answer)
+	require.NoError(t, err)
+	require.Less(t, len(rawAns), 1024)
+}

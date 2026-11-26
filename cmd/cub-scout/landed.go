@@ -47,9 +47,9 @@ var landedCmd = &cobra.Command{
 	Use:   "landed <kind>/<name> | <kind> <name>",
 	Short: "Check whether an anchored revision or digest landed on a workload",
 	Long: `Check whether a specific Git revision, OCI digest, or ConfigHub unit revision
-reached a workload (Deployment, StatefulSet, DaemonSet, Job, or CronJob) under
-Flux, Argo CD, Helm, kro, or Crossplane, whether delivery is still converging,
-or which link broke.
+reached a workload (Deployment, StatefulSet, DaemonSet, Job, CronJob, or Argo
+Rollout) under Flux, Argo CD, Helm, kro, or Crossplane, whether delivery is
+still converging, or which link broke.
 
 Read-only: never modifies cluster state. With --wait, performs a bounded
 read-only poll loop (capped at 5m on CLI, 60s via MCP) that exits early as
@@ -167,7 +167,7 @@ func parseLandedTarget(args []string, ns string) (agent.LandingObjectRef, error)
 	}
 	kind := canonicalWorkloadKind(rawKind)
 	if kind == "" {
-		return agent.LandingObjectRef{}, fmt.Errorf("unsupported workload kind %q (supported: Deployment, StatefulSet, DaemonSet, Job, CronJob)", rawKind)
+		return agent.LandingObjectRef{}, fmt.Errorf("unsupported workload kind %q (supported: Deployment, StatefulSet, DaemonSet, Job, CronJob, Rollout)", rawKind)
 	}
 	if strings.TrimSpace(ns) == "" {
 		ns = "default"
@@ -192,6 +192,8 @@ func canonicalWorkloadKind(raw string) string {
 		return "Job"
 	case "cj", "cronjob", "cronjobs":
 		return "CronJob"
+	case "ro", "rollout", "rollouts":
+		return "Rollout"
 	default:
 		return ""
 	}
@@ -207,6 +209,8 @@ func workloadGVR(kind string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}
 	case "CronJob":
 		return schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}
+	case "Rollout":
+		return schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "rollouts"}
 	default:
 		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	}
@@ -446,6 +450,8 @@ func gvrMatchesRecordedObject(gvr schema.GroupVersionResource, obj *unstructured
 		return kind == "ocirepository"
 	case "applications":
 		return kind == "application"
+	case "rollouts":
+		return kind == "rollout"
 	case "secrets":
 		return kind == "secret"
 	case "pods":
@@ -835,6 +841,8 @@ func observeWorkloadLink(obj *unstructured.Unstructured, ref agent.LandingObject
 		return observeJobLink(obj, ref)
 	case "CronJob":
 		return observeCronJobLink(obj, ref)
+	case "Rollout":
+		return observeRolloutLink(obj, ref)
 	}
 	res, err := status.Compute(obj)
 	if err != nil {
@@ -958,6 +966,94 @@ func observeCronJobLink(obj *unstructured.Unstructured, ref agent.LandingObjectR
 	default:
 		link.Status = "progressing"
 		link.Message = "CronJob has not been scheduled yet (no status.lastScheduleTime)"
+	}
+	return link
+}
+
+// rolloutObservedGeneration extracts status.observedGeneration from an Argo
+// Rollout. Argo Rollouts encodes observedGeneration as a string in its CRD,
+// though recorded fixtures may also supply an integer.
+func rolloutObservedGeneration(obj *unstructured.Unstructured) (int64, bool) {
+	val, found, err := unstructured.NestedFieldNoCopy(obj.Object, "status", "observedGeneration")
+	if err != nil || !found || val == nil {
+		return 0, false
+	}
+	switch v := val.(type) {
+	case int64:
+		return v, true
+	case int:
+		return int64(v), true
+	case float64:
+		return int64(v), true
+	case string:
+		parsed, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
+		if err == nil {
+			return parsed, true
+		}
+		return 0, false
+	default:
+		return 0, false
+	}
+}
+
+// observeRolloutLink evaluates an argoproj.io/v1alpha1 Rollout without false
+// landed claims: only Healthy with observedGeneration matching generation
+// yields "ready"; Paused, Progressing, or generation lag yields "progressing"
+// (so EvaluateLanding returns "converging"); Degraded yields "failed".
+func observeRolloutLink(obj *unstructured.Unstructured, ref agent.LandingObjectRef) *agent.LandingLinkObservation {
+	link := &agent.LandingLinkObservation{
+		Present:  true,
+		Ref:      &ref,
+		Status:   "unknown",
+		Reporter: mapsvc.RestsOnObjectMetadata,
+	}
+	phase, _, _ := unstructured.NestedString(obj.Object, "status", "phase")
+	phase = strings.TrimSpace(phase)
+	msg, _, _ := unstructured.NestedString(obj.Object, "status", "message")
+	msg = strings.TrimSpace(msg)
+	paused, _, _ := unstructured.NestedBool(obj.Object, "spec", "paused")
+	gen := obj.GetGeneration()
+	obsGen, hasObsGen := rolloutObservedGeneration(obj)
+	genLag := gen > 0 && hasObsGen && obsGen < gen
+
+	switch phase {
+	case "Healthy":
+		switch {
+		case gen > 0 && !hasObsGen:
+			link.Status = "progressing"
+			link.Message = fmt.Sprintf("Rollout status.observedGeneration is absent while metadata.generation is %d", gen)
+		case genLag:
+			link.Status = "progressing"
+			link.Message = fmt.Sprintf("Rollout observedGeneration (%d) lags metadata.generation (%d)", obsGen, gen)
+		case paused:
+			link.Status = "progressing"
+			link.Message = landedFirstNonEmpty(msg, "Rollout is paused (spec.paused=true)")
+		default:
+			link.Status = "ready"
+			link.Message = landedFirstNonEmpty(msg, "Rollout is Healthy")
+		}
+	case "Paused":
+		link.Status = "progressing"
+		link.Message = landedFirstNonEmpty(msg, "Rollout is Paused")
+	case "Progressing":
+		link.Status = "progressing"
+		link.Message = landedFirstNonEmpty(msg, "Rollout is Progressing")
+	case "Degraded":
+		if genLag {
+			link.Status = "progressing"
+			link.Message = fmt.Sprintf("Rollout observedGeneration (%d) lags metadata.generation (%d)", obsGen, gen)
+		} else {
+			link.Status = "failed"
+			link.Message = landedFirstNonEmpty(msg, "Rollout is Degraded")
+		}
+	default:
+		if genLag {
+			link.Status = "progressing"
+			link.Message = fmt.Sprintf("Rollout observedGeneration (%d) lags metadata.generation (%d)", obsGen, gen)
+		} else {
+			link.Status = "unknown"
+			link.Message = landedFirstNonEmpty(msg, "Rollout status.phase is unknown or absent")
+		}
 	}
 	return link
 }
