@@ -1,54 +1,141 @@
 # cub-scout Bot Example
 
-Run cub-scout continuously inside Kubernetes as a read-only observation bot.
+Run `cub-scout` continuously inside Kubernetes as a strictly read-only observation bot.
 
-The bot is the deployable form of `cub-scout watch`: it uses the same polling
-engine, event types, queueing, and optional receipt emission, but reads
-configuration from `CUB_SCOUT_BOT_*` environment variables and uses in-cluster
-Kubernetes authentication.
+The bot is the deployable form of `cub-scout watch`: it runs the same deterministic
+observation engine, event types, queueing, and optional receipt emission, reading
+configuration from `CUB_SCOUT_BOT_*` environment variables and using in-cluster
+Kubernetes ServiceAccount authentication.
 
-## What This Covers
+## What This Deploy Kit Includes
 
-- `cub-scout bot` as an in-cluster observer
-- read-only ServiceAccount, ClusterRole, and ClusterRoleBinding
-- webhook delivery using `CUB_SCOUT_BOT_WEBHOOK_URL`
-- warning/critical filtering and bounded receipt-build backpressure
-- numeric nonroot image identity compatible with `runAsNonRoot` (fixed in v2.9.0)
+- [`rbac-readonly.yaml`](rbac-readonly.yaml): `Namespace`, `ServiceAccount`, `ClusterRole` with strictly `get`, `list`, and `watch` verbs only (zero write verbs), and `ClusterRoleBinding`.
+- [`deployment.yaml`](deployment.yaml): Hardened non-root `Deployment` (`runAsNonRoot: true`, `readOnlyRootFilesystem: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`, `seccompProfile: RuntimeDefault`) pinned to `ghcr.io/confighub/cub-scout:v3.0.0`, running `cub-scout bot --watch-backed`.
+- [`build-from-release.sh`](build-from-release.sh): Checksum-verified local image builder for `linux/amd64` and `linux/arm64` if your cluster cannot pull from GHCR.
 
-## Quick Run
+## 30-Second Deploy & Verification
 
-Choose a usable image first. Anonymous pulls from the documented registry are
-currently unverified/failing (#520); the default manifest pins v2.10.1 but does
-not fix access. The published registry image is amd64-only. The local-build
-path below supports either Linux amd64 or arm64 without pulling that image.
-
-Create the webhook Secret:
+1. Apply the strictly read-only RBAC manifest:
 
 ```bash
-kubectl create namespace cub-scout
+kubectl apply -f examples/bot/rbac-readonly.yaml
+```
+
+2. Create the webhook destination Secret:
+
+```bash
 kubectl -n cub-scout create secret generic cub-scout-bot-webhook \
   --from-literal=url='https://events.example.com/cub-scout'
 ```
 
-Apply the bot manifest:
+3. Deploy the hardened bot Deployment:
 
 ```bash
 kubectl apply -f examples/bot/deployment.yaml
 ```
 
-Inspect the Pod:
+4. Verify rollout and inspect bot logs:
 
 ```bash
+kubectl -n cub-scout rollout status deploy/cub-scout-bot
 kubectl -n cub-scout logs deploy/cub-scout-bot
+```
+
+5. Verify the ServiceAccount has zero write access:
+
+```bash
+kubectl auth can-i --as=system:serviceaccount:cub-scout:cub-scout-bot get deployments -A   # yes
+kubectl auth can-i --as=system:serviceaccount:cub-scout:cub-scout-bot patch deployments -A # no
+kubectl auth can-i --as=system:serviceaccount:cub-scout:cub-scout-bot delete pods -A       # no
+```
+
+## Configuration
+
+| Environment Variable | Default in Manifest | Purpose |
+|---|---|---|
+| `CUB_SCOUT_BOT_WEBHOOK_URL` | Secret `cub-scout-bot-webhook/url` | Webhook URL receiving JSON events (required unless `CUB_SCOUT_BOT_OUTPUT_FILE` is set) |
+| `CUB_SCOUT_BOT_INTERVAL` | `30s` | Observation cycle interval (Go duration) |
+| `CUB_SCOUT_BOT_NAMESPACE` | `""` (all namespaces) | Scope observation to a single namespace (for example `prod`) |
+| `CUB_SCOUT_BOT_SEVERITY` | `warning,critical` | Filter finding/drift events by severity |
+| `CUB_SCOUT_BOT_MAX_QUEUED_EVENTS` | `1000` | Maximum buffered events when the webhook is unavailable |
+| `CUB_SCOUT_BOT_EMIT_RECEIPT_ON` | `all` | Event types that attach an inline receipt |
+| `CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP` | `10` | Per-cycle cap on receipt-build attempts |
+
+The Deployment passes `args: ["bot", "--watch-backed"]` to the container entrypoint
+(`/cub-scout`), backing inventory and state-scan reads with Kubernetes watch informers
+so idle cycles read from cache instead of re-listing the API server.
+
+The RBAC is intentionally read-only. If you remove access to a resource type,
+`cub-scout` omits that evidence and reports partial observations rather than
+mutating the cluster.
+
+## Event Types & Standard `answer` Envelope
+
+The bot emits the same event types as `cub-scout watch`:
+
+- `resource.discovered`
+- `ownership.changed`
+- `drift.detected`
+- `scan.finding`
+
+Each emitted event carries the standard read-only `answer` envelope (`#1025`),
+reusing the approved `answer.state` vocabulary (`issues-flagged`, `nothing-flagged`,
+`incomplete`, `not-observable`) with quoted cluster text in `basis[].quoted` and
+`unknowns[].quoted`:
+
+```json
+{
+  "timestamp": "2026-11-26T00:00:00Z",
+  "type": "scan.finding",
+  "severity": "warning",
+  "resource": {
+    "kind": "Deployment",
+    "namespace": "prod",
+    "name": "payments",
+    "owner": "Flux"
+  },
+  "details": {
+    "message": "container runs as root"
+  },
+  "answer": {
+    "cluster": {
+      "context": "in-cluster",
+      "idSource": "not-read"
+    },
+    "observedAt": "2026-11-26T00:00:00Z",
+    "state": "issues-flagged",
+    "reason": "finding-flagged",
+    "summary": "Watch flagged a scan finding on Deployment/payments in prod.",
+    "basis": [
+      {
+        "claim": "state scan reported a finding",
+        "restsOn": "cub-scout-comparison",
+        "ref": "Deployment/prod/payments",
+        "quoted": "container runs as root"
+      }
+    ],
+    "unknowns": [],
+    "next": [
+      {
+        "command": "cub-scout explain deploy/payments -n prod",
+        "why": "inspect owner and recent field managers"
+      }
+    ],
+    "cost": {
+      "coverage": "not-measured"
+    }
+  }
+}
 ```
 
 ## Build a Local Image From a Release
 
-The helper is an unreleased installation addition for v2.11 and can package
-the existing v2.10.1 release. It requires Bash, curl, tar, awk, sha256sum or
-shasum, and Docker with BuildKit/`--load` support. It needs network access to
-GitHub release assets and the runtime base image, but not GHCR access or
-ConfigHub authentication.
+If your cluster cannot pull `ghcr.io/confighub/cub-scout` directly (for example in an
+air-gapped environment or before a release tag is published), you can build a local
+image from a published GitHub release archive. The helper requires Bash, `curl`, `tar`,
+`awk`, `sha256sum` or `shasum`, and Docker with BuildKit/`--load` support. It needs
+network access to GitHub release assets and the runtime base image, but not GHCR access
+or ConfigHub authentication.
 
 Select the architecture of the **target Kubernetes nodes**, not necessarily
 your laptop. For arm64:
@@ -107,32 +194,4 @@ Verified archive SHA-256 values:
 
 This proves the fallback's download/build/runtime path for those archives.
 No cluster manifests were applied, no images pushed, and no registry settings,
-credentials or installed plugins changed. It does not verify a running bot's
-sink delivery, repair anonymous registry access or publish a multi-architecture
-registry image. Those are separate checks in #520.
-
-## Scope Tuning
-
-The default manifest observes all namespaces. To scope it down, set:
-
-```yaml
-- name: CUB_SCOUT_BOT_NAMESPACE
-  value: prod
-```
-
-The RBAC is intentionally read-only. If you remove access to a resource type,
-cub-scout will omit that evidence or report partial observations rather than
-mutating the cluster.
-
-## Event Types
-
-The bot emits the same event types as `watch`:
-
-- `resource.discovered`
-- `ownership.changed`
-- `drift.detected`
-- `scan.finding`
-
-Use `CUB_SCOUT_BOT_EMIT_RECEIPT_ON=all` to attach inline receipts where
-supported. `CUB_SCOUT_BOT_EMIT_RECEIPT_BATCH_CAP` bounds receipt-building per
-poll so bursts do not turn into unbounded API pressure.
+credentials or installed plugins changed.
