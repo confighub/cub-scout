@@ -20,6 +20,11 @@ v2.12.0 limits, the **v2.12.1** Deployment proof, the difference between
 configuration and image digests, and what pod-reported identity can and cannot
 prove.
 
+Wiring `cub-scout` into **`cub mini`**, a coding agent, an ops bot, or a CI
+gate? Start with the [Agent Write Loop](../howto/agent-write-loop.md) for
+`before-write`, `landed --verify-pod-images`, offline `snapshot` +
+`--recording`, and Ed25519 `receipt sign` / `verify`.
+
 ---
 
 ## First-Time User
@@ -91,13 +96,33 @@ Then:
 
 ## AI Tools
 
-An agent with shell access can run `cub-scout ... --format json` directly.
-MCP is the structured-tool alternative: configure the host to launch
-`cub-scout mcp serve` over stdio. Scout does not have to be running beforehand.
-Each server has its own process lifetime and credentials; it is not a fleet
-service. Bounded MCP calls expose cache/freshness and explicit refresh.
+An agent with shell access can run `cub scout ... --format json` (or standalone
+`cub-scout ... --format json`) directly. MCP is the structured-tool
+alternative: configure the host to launch `cub-scout mcp serve` over stdio.
+Scout does not have to be running beforehand. Each server has its own process
+lifetime and credentials; it is not a fleet service. Bounded MCP calls expose
+cache/freshness and explicit refresh.
 
-Run:
+Full read-only agent write loop (pre-write safety, post-write Pod image-digest
+witness, air-gapped `--recording`, and offline Ed25519 signed proof):
+
+```bash
+# Before writing: ownership, revert risk, sync windows, contention, PDBs (<1 KB)
+cub scout before-write deploy/api -n prod --field-path .spec.replicas --format json
+
+# After writing: verify anchored revision + running Pod imageIDs
+cub scout landed deploy/api -n prod --revision <sha> --verify-pod-images --wait 60s --format json
+
+# Offline / air-gapped: capture once, evaluate anywhere
+cub scout snapshot --format yaml -o snap.yaml
+cub scout landed deploy/api -n prod --revision <sha> --verify-pod-images --recording snap.yaml --format json
+
+# Tamper-evident offline proof
+cub scout receipt sign --input landed.json --key priv.pem -o signed.json
+cub scout receipt verify --input signed.json --pubkey pub.pem --format json
+```
+
+MCP server, context-pack, and ask-mode contract:
 
 ```bash
 cub-scout mcp serve
@@ -106,6 +131,8 @@ cub-scout context-pack --format json --max-bytes 16384
 ```
 
 Then:
+- [Agent Write Loop](../howto/agent-write-loop.md) (`before-write`, `landed --verify-pod-images`, `--recording`, Ed25519 receipts, `--view summary` / `--if-unchanged`)
+- [Answer Sizes (99.78% smaller)](../reference/answer-sizes.md)
 - [Using cub-scout from an AI Tool](../howto/using-cub-scout-from-ai-tool.md)
 - [Context-Pack v2](../howto/context-pack-v2.md)
 - [AI Ask-Mode Contract](../howto/ai-ask-mode-contract.md)
