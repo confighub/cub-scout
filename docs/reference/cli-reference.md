@@ -81,6 +81,7 @@ Source of truth:
 | `map orphans` | Unmanaged/orphan resources | [Command Reference](commands.md#map-orphans) | [Orphans](../../examples/orphans/) |
 | `mcp serve` | Read-only MCP server over stdio | [Command Reference](commands.md#mcp) | [MCP gateway](../../examples/mcp-gateway/) |
 | `quickstart demo` | Run fixture-backed demos | [Command Reference](commands.md#quickstart-demo) | [Demos index](../../examples/demos/) |
+| `receipt export-attestation` | Export a local `signed-receipt/v1` JSON file or stdin as a deterministic in-toto Statement v1 (`https://confighub.com/attestations/landed/v1`) offline with `--input <file\|-> [--pubkey <pub.pem>] [--cluster <name>] [--target <slug>] [--release <id>] [-o <out.json>]` (#889, #600) | [Command Reference](commands.md#receipt) | [Receipts](../../examples/receipts/) |
 | `receipt keygen` | Generate a local Ed25519 PKCS#8/PKIX key pair for offline receipt signing and verification (#889) | [Command Reference](commands.md#receipt) | [Receipts](../../examples/receipts/) |
 | `receipt list` | Walk the local receipt store ($CUB_SCOUT_RECEIPTS_DIR → $XDG_DATA_HOME → $HOME/.local/share); JSON / ASCII output with freshness status, newest first | [Command Reference](commands.md#receipt-list) | [Receipts](../../examples/receipts/) |
 | `receipt show` | Render a saved receipt (ASCII / JSON). Does NOT verify the fingerprint — works on tampered receipts for forensic inspection | [Command Reference](commands.md#receipt-show) | [Receipts](../../examples/receipts/) |
