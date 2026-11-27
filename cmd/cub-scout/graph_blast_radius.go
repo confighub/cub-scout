@@ -4,12 +4,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/confighub/cub-scout/v3/internal/mapsvc"
 	"github.com/spf13/cobra"
@@ -17,18 +19,30 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
-const blastRadiusMaxNodes = 50
+const (
+	blastRadiusMaxNodes     = 50
+	blastRadiusCostCoverage = "blast-radius-session-client"
+)
+
+var (
+	newBlastRadiusSessionForSelection = newTraceSessionForSelection
+	blastRadiusNow                    = time.Now
+)
 
 var graphBlastRadiusCmd = &cobra.Command{
 	Use:   "blast-radius <kind>/<name>",
-	Short: "Compute offline dependency blast radius from a recorded snapshot",
+	Short: "Compute ephemeral dependency blast radius from a live cluster or recorded snapshot",
 	Long: `Compute an ephemeral, in-memory dependency blast radius for a resource
-from a single recorded multi-object YAML/JSON snapshot.
+from bounded, strictly read-only live namespace reads or from a recorded
+multi-object YAML/JSON snapshot (--recording).
 
-Strictly read-only and offline: never contacts a Kubernetes cluster, never
-persists graph state, and never writes to disk.
+Strictly read-only: never modifies cluster state, never persists graph state,
+and never writes to disk. Secret data/stringData and Pod env/args/volumes are
+always stripped before graph traversal.
 
 Traverses:
   - metadata.ownerReferences
@@ -38,23 +52,27 @@ Traverses:
   - ConfigMap and Secret volume/envFrom/env/imagePullSecrets references
   - PodDisruptionBudget label selectors
 
-Example:
+Examples:
+  cub-scout graph blast-radius ConfigMap/app-cfg -n prod --format json
+  cub-scout graph blast-radius ConfigMap/app-cfg -n prod --kube-context prod-east --format json
   cub-scout graph blast-radius ConfigMap/app-cfg -n prod --recording snapshot.yaml --format json`,
 	Args: cobra.ExactArgs(1),
 	RunE: runGraphBlastRadius,
 }
 
 var (
-	graphBlastRadiusNamespace string
-	graphBlastRadiusRecording string
-	graphBlastRadiusFormat    string
+	graphBlastRadiusNamespace   string
+	graphBlastRadiusKubeContext string
+	graphBlastRadiusRecording   string
+	graphBlastRadiusFormat      string
 )
 
 func init() {
 	graphCmd.AddCommand(graphBlastRadiusCmd)
 
-	graphBlastRadiusCmd.Flags().StringVarP(&graphBlastRadiusNamespace, "namespace", "n", "", "Namespace of the target resource")
-	graphBlastRadiusCmd.Flags().StringVar(&graphBlastRadiusRecording, "recording", "", "Path to a recorded multi-object YAML/JSON snapshot (required)")
+	graphBlastRadiusCmd.Flags().StringVarP(&graphBlastRadiusNamespace, "namespace", "n", "", "Namespace of the target resource (default: default for live reads)")
+	graphBlastRadiusCmd.Flags().StringVar(&graphBlastRadiusKubeContext, "kube-context", "", "Exact kube context for live Kubernetes reads; cannot be combined with --recording")
+	graphBlastRadiusCmd.Flags().StringVar(&graphBlastRadiusRecording, "recording", "", "Path to a recorded multi-object YAML/JSON snapshot (omit for live cluster reads)")
 	graphBlastRadiusCmd.Flags().StringVar(&graphBlastRadiusFormat, "format", "ascii", "Output format: ascii|json")
 }
 
@@ -88,17 +106,149 @@ func runGraphBlastRadius(cmd *cobra.Command, args []string) error {
 	if format != "ascii" && format != "json" {
 		return fmt.Errorf("unsupported --format %q (expected ascii or json)", graphBlastRadiusFormat)
 	}
-	if strings.TrimSpace(graphBlastRadiusRecording) == "" {
-		return fmt.Errorf("--recording is required for offline graph blast-radius")
-	}
 
-	snapshot, err := readRecordedObjectSnapshot(graphBlastRadiusRecording)
+	selection, err := clusterContextSelectionFromFlag(cmd)
 	if err != nil {
 		return err
 	}
 
-	out := computeBlastRadius(snapshot, kind, name, strings.TrimSpace(graphBlastRadiusNamespace))
+	ns := strings.TrimSpace(graphBlastRadiusNamespace)
+	if strings.TrimSpace(graphBlastRadiusRecording) != "" {
+		if selection.explicit {
+			return fmt.Errorf("--recording cannot be combined with --kube-context")
+		}
+		snapshot, err := readRecordedObjectSnapshot(graphBlastRadiusRecording)
+		if err != nil {
+			return err
+		}
+		out := computeBlastRadius(snapshot, kind, name, ns)
+		return writeBlastRadiusOutput(cmd.OutOrStdout(), out, format)
+	}
+
+	ctx := cmd.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if ns == "" {
+		ns = "default"
+	}
+
+	started := time.Now()
+	session, err := newBlastRadiusSessionForSelection(selection)
+	if err != nil {
+		return fmt.Errorf("select kubernetes context: %w", err)
+	}
+	dynClient, err := session.dynamicClient()
+	if err != nil {
+		return fmt.Errorf("create dynamic client: %w", err)
+	}
+
+	objects, listTruncated, err := collectLiveBlastRadiusObjects(ctx, dynClient, ns, defaultSnapshotMaxObjects)
+	if err != nil {
+		return err
+	}
+	snapshot := recordedObjectSnapshot{
+		Objects:       objects,
+		ObservedAt:    blastRadiusNow().UTC().Format(time.RFC3339),
+		SourceContext: session.contextLabel(),
+	}
+	out := computeBlastRadiusWithMode(snapshot, kind, name, ns, true, listTruncated)
+	if session.meter != nil && out.Answer != nil {
+		cost := session.meter.Snapshot()
+		cost.DurationMillis = time.Since(started).Milliseconds()
+		cost.Coverage = blastRadiusCostCoverage
+		out.Answer.Cost = mapsvc.AnswerCostFrom(cost)
+	}
 	return writeBlastRadiusOutput(cmd.OutOrStdout(), out, format)
+}
+
+func blastRadiusLiveResources() []snapshotResourceSpec {
+	return []snapshotResourceSpec{
+		// Workloads
+		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}, Kind: "Deployment"},
+		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "replicasets"}, Kind: "ReplicaSet"},
+		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "statefulsets"}, Kind: "StatefulSet"},
+		{GVR: schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"}, Kind: "DaemonSet"},
+		{GVR: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"}, Kind: "Job"},
+		{GVR: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"}, Kind: "CronJob"},
+		{GVR: schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "rollouts"}, Kind: "Rollout"},
+		// Config & Policies (Secrets strictly sanitized; ConfigMap data stripped)
+		{GVR: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}, Kind: "ConfigMap"},
+		{GVR: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}, Kind: "Secret"},
+		{GVR: schema.GroupVersionResource{Group: "policy", Version: "v1", Resource: "poddisruptionbudgets"}, Kind: "PodDisruptionBudget"},
+		// Pods (strictly sanitized)
+		{GVR: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}, Kind: "Pod"},
+		// GitOps objects in the target namespace
+		{GVR: schema.GroupVersionResource{Group: "kustomize.toolkit.fluxcd.io", Version: "v1", Resource: "kustomizations"}, Kind: "Kustomization"},
+		{GVR: schema.GroupVersionResource{Group: "helm.toolkit.fluxcd.io", Version: "v2", Resource: "helmreleases"}, Kind: "HelmRelease"},
+		{GVR: schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "gitrepositories"}, Kind: "GitRepository"},
+		{GVR: schema.GroupVersionResource{Group: "source.toolkit.fluxcd.io", Version: "v1", Resource: "ocirepositories"}, Kind: "OCIRepository"},
+		{GVR: schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}, Kind: "Application"},
+	}
+}
+
+func collectLiveBlastRadiusObjects(ctx context.Context, dynClient dynamic.Interface, namespace string, maxObjects int) ([]*unstructured.Unstructured, bool, error) {
+	if maxObjects < 1 {
+		maxObjects = defaultSnapshotMaxObjects
+	}
+	if maxObjects > maxRecordedObjectCount {
+		maxObjects = maxRecordedObjectCount
+	}
+
+	captured := make([]*unstructured.Unstructured, 0)
+	truncated := false
+	listOpts := metav1.ListOptions{Limit: int64(maxObjects)}
+
+	for _, spec := range blastRadiusLiveResources() {
+		if err := ctx.Err(); err != nil {
+			return nil, false, err
+		}
+
+		var list *unstructured.UnstructuredList
+		var err error
+		if namespace != "" {
+			list, err = dynClient.Resource(spec.GVR).Namespace(namespace).List(ctx, listOpts)
+		} else {
+			list, err = dynClient.Resource(spec.GVR).List(ctx, listOpts)
+		}
+		if err != nil {
+			// Skip unavailable CRDs or optional APIs cleanly.
+			continue
+		}
+
+		items := make([]unstructured.Unstructured, len(list.Items))
+		copy(items, list.Items)
+		sort.Slice(items, func(i, j int) bool {
+			if items[i].GetNamespace() != items[j].GetNamespace() {
+				return items[i].GetNamespace() < items[j].GetNamespace()
+			}
+			return items[i].GetName() < items[j].GetName()
+		})
+
+		for i := range items {
+			if len(captured) >= maxObjects {
+				truncated = true
+				break
+			}
+			sanitized := sanitizeRecordedSnapshotObject(&items[i], spec)
+			if sanitized == nil {
+				continue
+			}
+			if strings.EqualFold(sanitized.GetKind(), "ConfigMap") {
+				delete(sanitized.Object, "data")
+				delete(sanitized.Object, "binaryData")
+			}
+			captured = append(captured, sanitized)
+		}
+		if list.GetContinue() != "" {
+			truncated = true
+		}
+		if truncated {
+			break
+		}
+	}
+
+	return captured, truncated, nil
 }
 
 func parseBlastRadiusTarget(raw string) (kind, name string, err error) {
@@ -568,6 +718,10 @@ func pdbMatchesLabels(pdb *unstructured.Unstructured, podLabels labels.Set) bool
 }
 
 func computeBlastRadius(snapshot recordedObjectSnapshot, kind, name, namespace string) blastRadiusOutput {
+	return computeBlastRadiusWithMode(snapshot, kind, name, namespace, false, false)
+}
+
+func computeBlastRadiusWithMode(snapshot recordedObjectSnapshot, kind, name, namespace string, live, listTruncated bool) blastRadiusOutput {
 	observedAt := strings.TrimSpace(snapshot.ObservedAt)
 	if observedAt == "" {
 		observedAt = "unknown"
@@ -582,9 +736,9 @@ func computeBlastRadius(snapshot recordedObjectSnapshot, kind, name, namespace s
 			Ancestors:         []blastRadiusNode{},
 			Descendants:       []blastRadiusNode{},
 			AffectedWorkloads: []string{},
-			Truncated:         false,
+			Truncated:         listTruncated,
 		}
-		out.Answer = buildBlastRadiusAnswer(out, snapshot, false, err.Error())
+		out.Answer = buildBlastRadiusAnswer(out, snapshot, false, err.Error(), live, namespace)
 		return out
 	}
 
@@ -594,7 +748,7 @@ func computeBlastRadius(snapshot recordedObjectSnapshot, kind, name, namespace s
 	ancestors, ancTruncated := traverseBlastDirection(g.backward, targetRef, blastRadiusMaxNodes)
 	remaining := blastRadiusMaxNodes - len(ancestors)
 	descendants, descTruncated := traverseBlastDirection(g.forward, targetRef, remaining)
-	truncated := ancTruncated || descTruncated
+	truncated := ancTruncated || descTruncated || listTruncated
 
 	affected := collectAffectedWorkloads(g, targetRef, descendants)
 
@@ -606,7 +760,7 @@ func computeBlastRadius(snapshot recordedObjectSnapshot, kind, name, namespace s
 		AffectedWorkloads: affected,
 		Truncated:         truncated,
 	}
-	out.Answer = buildBlastRadiusAnswer(out, snapshot, true, "")
+	out.Answer = buildBlastRadiusAnswer(out, snapshot, true, "", live, namespace)
 	return out
 }
 
@@ -695,7 +849,11 @@ func isBlastWorkload(obj *unstructured.Unstructured) bool {
 	}
 }
 
-func buildBlastRadiusAnswer(out blastRadiusOutput, snapshot recordedObjectSnapshot, found bool, lookupErr string) *mapsvc.Answer {
+func buildBlastRadiusAnswer(out blastRadiusOutput, snapshot recordedObjectSnapshot, found bool, lookupErr string, live bool, namespace string) *mapsvc.Answer {
+	coverage := "offline-recording"
+	if live {
+		coverage = blastRadiusCostCoverage
+	}
 	ans := &mapsvc.Answer{
 		ObservedAt: out.ObservedAt,
 		Cluster: mapsvc.AnswerCluster{
@@ -705,12 +863,22 @@ func buildBlastRadiusAnswer(out blastRadiusOutput, snapshot recordedObjectSnapsh
 		Basis:    []mapsvc.AnswerBasis{},
 		Unknowns: []mapsvc.AnswerUnknown{},
 		Next:     []mapsvc.AnswerNext{},
-		Cost:     mapsvc.AnswerCost{Coverage: "offline-recording"},
+		Cost:     mapsvc.AnswerCost{Coverage: coverage},
 	}
 
 	if !found {
 		ans.State = explainStateNotObservable
 		ans.Reason = explainReasonObjectNotRead
+		if live {
+			ans.Summary = fmt.Sprintf("%s was not found in namespace %s.", out.Target, namespace)
+			ans.Unknowns = append(ans.Unknowns, mapsvc.AnswerUnknown{
+				What:   "target resource",
+				Kind:   mapsvc.UnknownNotObservable,
+				Reason: "not present in live namespace snapshot",
+				Quoted: lookupErr,
+			})
+			return ans
+		}
 		ans.Summary = fmt.Sprintf("%s was not found in the recorded snapshot.", out.Target)
 		ans.Unknowns = append(ans.Unknowns, mapsvc.AnswerUnknown{
 			What:   "target resource",
@@ -725,8 +893,12 @@ func buildBlastRadiusAnswer(out blastRadiusOutput, snapshot recordedObjectSnapsh
 	ans.State = explainStateExplained
 	ans.Reason = explainReasonChainRead
 	ans.Summary = fmt.Sprintf("%s has %d ancestor(s), %d descendant(s), %d workload(s).", out.Target, len(out.Ancestors), len(out.Descendants), len(out.AffectedWorkloads))
+	claim := "ephemeral in-memory graph from recorded snapshot"
+	if live {
+		claim = "ephemeral in-memory graph from live namespace read"
+	}
 	ans.Basis = append(ans.Basis, mapsvc.AnswerBasis{
-		Claim:   "ephemeral in-memory graph from recorded snapshot",
+		Claim:   claim,
 		RestsOn: mapsvc.RestsOnObjectMetadata,
 	})
 	if out.Truncated {
@@ -736,6 +908,8 @@ func buildBlastRadiusAnswer(out blastRadiusOutput, snapshot recordedObjectSnapsh
 			Reason: fmt.Sprintf("truncated at %d nodes", blastRadiusMaxNodes),
 		})
 	}
-	ans.Unknowns = append(ans.Unknowns, offlineRecordingUnknown(snapshot))
+	if !live {
+		ans.Unknowns = append(ans.Unknowns, offlineRecordingUnknown(snapshot))
+	}
 	return ans
 }

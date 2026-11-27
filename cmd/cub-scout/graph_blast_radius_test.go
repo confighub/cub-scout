@@ -5,15 +5,20 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/confighub/cub-scout/v3/internal/mapsvc"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
 )
 
 const fluxMultiHopBlastFixture = `# observedAt: 2026-11-26T00:00:00Z
@@ -374,4 +379,164 @@ func TestGraphBlastRadiusCLIFromRecordingFile(t *testing.T) {
 	require.Contains(t, asciiBuf.String(), "Blast Radius: ConfigMap/prod/app-cfg")
 	require.Contains(t, asciiBuf.String(), "Deployment/prod/api")
 	require.Contains(t, asciiBuf.String(), "PodDisruptionBudget/prod/api-pdb")
+}
+
+func TestGraphBlastRadiusLiveClusterAndSanitization(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method, "live blast-radius must be strictly read-only")
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/v1/namespaces/prod/configmaps":
+			_, _ = w.Write([]byte(`{"apiVersion":"v1","kind":"ConfigMapList","items":[{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"app-cfg","namespace":"prod","labels":{"app":"api"}},"data":{"SECRET_LIKE":"should-be-stripped"}}]}`))
+		case "/api/v1/namespaces/prod/secrets":
+			_, _ = w.Write([]byte(`{"apiVersion":"v1","kind":"SecretList","items":[{"apiVersion":"v1","kind":"Secret","metadata":{"name":"db-creds","namespace":"prod"},"type":"Opaque","data":{"password":"c2VjcmV0"}}]}`))
+		case "/apis/apps/v1/namespaces/prod/deployments":
+			_, _ = w.Write([]byte(`{"apiVersion":"apps/v1","kind":"DeploymentList","items":[{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"api","namespace":"prod"},"spec":{"template":{"metadata":{"labels":{"app":"api"}},"spec":{"containers":[{"name":"api","image":"ghcr.io/example/api:v1","envFrom":[{"configMapRef":{"name":"app-cfg"}},{"secretRef":{"name":"db-creds"}}]}]}}}}]}`))
+		case "/apis/apps/v1/namespaces/prod/replicasets":
+			_, _ = w.Write([]byte(`{"apiVersion":"apps/v1","kind":"ReplicaSetList","items":[{"apiVersion":"apps/v1","kind":"ReplicaSet","metadata":{"name":"api-rs","namespace":"prod","ownerReferences":[{"apiVersion":"apps/v1","kind":"Deployment","name":"api","uid":"dep-1"}]}}]}`))
+		case "/api/v1/namespaces/prod/pods":
+			_, _ = w.Write([]byte(`{"apiVersion":"v1","kind":"PodList","items":[{"apiVersion":"v1","kind":"Pod","metadata":{"name":"api-pod-1","namespace":"prod","ownerReferences":[{"apiVersion":"apps/v1","kind":"ReplicaSet","name":"api-rs","uid":"rs-1"}]},"spec":{"containers":[{"name":"api","image":"ghcr.io/example/api:v1","env":[{"name":"TOKEN","value":"sensitive"}]}]}}]}`))
+		case "/apis/policy/v1/namespaces/prod/poddisruptionbudgets":
+			_, _ = w.Write([]byte(`{"apiVersion":"policy/v1","kind":"PodDisruptionBudgetList","items":[{"apiVersion":"policy/v1","kind":"PodDisruptionBudget","metadata":{"name":"api-pdb","namespace":"prod"},"spec":{"minAvailable":1,"selector":{"matchLabels":{"app":"api"}}}}]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	prevNS, prevRec, prevCtx, prevFmt := graphBlastRadiusNamespace, graphBlastRadiusRecording, graphBlastRadiusKubeContext, graphBlastRadiusFormat
+	prevSessionFn := newBlastRadiusSessionForSelection
+	prevNow := blastRadiusNow
+	t.Cleanup(func() {
+		graphBlastRadiusNamespace, graphBlastRadiusRecording, graphBlastRadiusKubeContext, graphBlastRadiusFormat = prevNS, prevRec, prevCtx, prevFmt
+		newBlastRadiusSessionForSelection = prevSessionFn
+		blastRadiusNow = prevNow
+		graphBlastRadiusCmd.SetOut(nil)
+		if f := graphBlastRadiusCmd.Flags().Lookup("kube-context"); f != nil {
+			f.Changed = false
+		}
+	})
+
+	fixedTime := time.Date(2026, 11, 27, 8, 0, 0, 0, time.UTC)
+	blastRadiusNow = func() time.Time { return fixedTime }
+	var seenSelection clusterContextSelection
+	newBlastRadiusSessionForSelection = func(sel clusterContextSelection) (*traceSession, error) {
+		seenSelection = sel
+		return newTraceSession(&rest.Config{Host: srv.URL}, sel.name)
+	}
+
+	// Verify sanitization directly on collected live objects.
+	sess, err := newTraceSession(&rest.Config{Host: srv.URL}, "live-prod")
+	require.NoError(t, err)
+	dynClient, err := sess.dynamicClient()
+	require.NoError(t, err)
+	collected, truncated, err := collectLiveBlastRadiusObjects(context.Background(), dynClient, "prod", defaultSnapshotMaxObjects)
+	require.NoError(t, err)
+	require.False(t, truncated)
+	for _, obj := range collected {
+		if obj.GetKind() == "Secret" {
+			_, hasData := obj.Object["data"]
+			_, hasStringData := obj.Object["stringData"]
+			require.False(t, hasData, "live blast-radius must strip Secret.data")
+			require.False(t, hasStringData, "live blast-radius must strip Secret.stringData")
+		}
+		if obj.GetKind() == "ConfigMap" {
+			_, hasData := obj.Object["data"]
+			require.False(t, hasData, "live blast-radius must strip ConfigMap.data")
+		}
+	}
+
+	// Run CLI in live mode with explicit --kube-context.
+	graphBlastRadiusNamespace = "prod"
+	graphBlastRadiusRecording = ""
+	graphBlastRadiusFormat = "json"
+	require.NoError(t, graphBlastRadiusCmd.Flags().Set("kube-context", "live-prod"))
+
+	var outBuf bytes.Buffer
+	graphBlastRadiusCmd.SetOut(&outBuf)
+	require.NoError(t, runGraphBlastRadius(graphBlastRadiusCmd, []string{"ConfigMap/app-cfg"}))
+	require.True(t, seenSelection.explicit)
+	require.Equal(t, "live-prod", seenSelection.name)
+
+	var decoded blastRadiusOutput
+	require.NoError(t, json.Unmarshal(outBuf.Bytes(), &decoded))
+	require.Equal(t, "ConfigMap/prod/app-cfg", decoded.Target)
+	require.Equal(t, "2026-11-27T08:00:00Z", decoded.ObservedAt)
+	require.Equal(t, []blastRadiusNode{
+		{Ref: "Deployment/prod/api", Via: "configmap-ref", Hops: 1},
+		{Ref: "PodDisruptionBudget/prod/api-pdb", Via: "pdb-selector", Hops: 2},
+		{Ref: "ReplicaSet/prod/api-rs", Via: "owner-ref", Hops: 2},
+		{Ref: "Pod/prod/api-pod-1", Via: "owner-ref", Hops: 3},
+	}, decoded.Descendants)
+	require.Equal(t, []string{"Deployment/prod/api"}, decoded.AffectedWorkloads)
+	require.NotNil(t, decoded.Answer)
+	requireConformingAnswer(t, decoded.Answer, explainStates, explainReasons)
+	require.Equal(t, explainStateExplained, decoded.Answer.State)
+	require.Equal(t, "live-prod", decoded.Answer.Cluster.Context)
+	require.Equal(t, blastRadiusCostCoverage, decoded.Answer.Cost.Coverage)
+	require.Greater(t, decoded.Answer.Cost.RequestsMade, int64(0))
+	require.Empty(t, decoded.Answer.Unknowns)
+
+	// Missing target in live namespace -> not-observable.
+	outBuf.Reset()
+	require.NoError(t, runGraphBlastRadius(graphBlastRadiusCmd, []string{"Deployment/missing"}))
+	var missingOut blastRadiusOutput
+	require.NoError(t, json.Unmarshal(outBuf.Bytes(), &missingOut))
+	require.Equal(t, explainStateNotObservable, missingOut.Answer.State)
+	require.Equal(t, explainReasonObjectNotRead, missingOut.Answer.Reason)
+	require.Equal(t, blastRadiusCostCoverage, missingOut.Answer.Cost.Coverage)
+}
+
+func TestGraphBlastRadiusKubeContextValidationAndMutualExclusion(t *testing.T) {
+	dir := t.TempDir()
+	recPath := filepath.Join(dir, "snapshot.yaml")
+	require.NoError(t, os.WriteFile(recPath, []byte(fluxMultiHopBlastFixture), 0o600))
+
+	kubeconfigPath := filepath.Join(dir, "kubeconfig")
+	kubeconfigYAML := `apiVersion: v1
+kind: Config
+current-context: valid-ctx
+contexts:
+- name: valid-ctx
+  context:
+    cluster: valid-cluster
+    user: valid-user
+clusters:
+- name: valid-cluster
+  cluster:
+    server: https://127.0.0.1:6443
+users:
+- name: valid-user
+  user:
+    token: dummy
+`
+	require.NoError(t, os.WriteFile(kubeconfigPath, []byte(kubeconfigYAML), 0o600))
+	t.Setenv("KUBECONFIG", kubeconfigPath)
+
+	prevNS, prevRec, prevCtx, prevFmt := graphBlastRadiusNamespace, graphBlastRadiusRecording, graphBlastRadiusKubeContext, graphBlastRadiusFormat
+	t.Cleanup(func() {
+		graphBlastRadiusNamespace, graphBlastRadiusRecording, graphBlastRadiusKubeContext, graphBlastRadiusFormat = prevNS, prevRec, prevCtx, prevFmt
+		graphBlastRadiusCmd.SetOut(nil)
+		if f := graphBlastRadiusCmd.Flags().Lookup("kube-context"); f != nil {
+			f.Changed = false
+		}
+	})
+
+	// 1. Mutual exclusion: --recording + --kube-context must be refused.
+	graphBlastRadiusNamespace = "prod"
+	graphBlastRadiusRecording = recPath
+	graphBlastRadiusFormat = "json"
+	require.NoError(t, graphBlastRadiusCmd.Flags().Set("kube-context", "valid-ctx"))
+
+	err := runGraphBlastRadius(graphBlastRadiusCmd, []string{"ConfigMap/app-cfg"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "--recording cannot be combined with --kube-context")
+
+	// 2. Invalid --kube-context in live mode must be refused without ambient fallback.
+	graphBlastRadiusRecording = ""
+	require.NoError(t, graphBlastRadiusCmd.Flags().Set("kube-context", "nonexistent-ctx"))
+
+	err = runGraphBlastRadius(graphBlastRadiusCmd, []string{"ConfigMap/app-cfg"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "nonexistent-ctx")
 }
