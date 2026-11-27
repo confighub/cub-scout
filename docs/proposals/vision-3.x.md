@@ -169,6 +169,6 @@ Shipped in `v3.2.0` (`#1034`–`#1041`):
   cluster with zero lock-in; add ConfigHub for per-cluster observed facts
   (`#600`), signed delivery attestations (`G4`, `#889`), and multi-cluster
   `ChangeWorkflow` promotion gates (`dev` → `staging` → `prod`).
-- **Core line:** *"Don't let your deploy controller or your coding agent grade
-  its own rollout. `cub-scout` is the independent witness that makes autonomous
-  GitOps safe in production."*
+- **Core line:** *"Know what is actually running in Kubernetes — who owns each
+  field, what will revert a change, and whether your deploy really reached
+  running Pods — at 99.8% lower token cost than `kubectl`."*
