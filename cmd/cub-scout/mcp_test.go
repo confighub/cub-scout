@@ -23,7 +23,7 @@ func TestNewMCPGateway_ToolsIncludeStandaloneSet(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 
-	want := []string{"before_write", "doctor", "explain", "gitops_settings", "gitops_status", "landed", "map", "release_check", "scan", "trace"}
+	want := []string{"before_write", "doctor", "explain", "gitops_settings", "gitops_status", "graph_blast_radius", "landed", "map", "release_check", "scan", "trace"}
 	if !reflect.DeepEqual(names, want) {
 		t.Fatalf("tool names = %v, want %v", names, want)
 	}
@@ -79,6 +79,7 @@ func TestNewMCPGatewayWithMode_ConnectedAddsConfigHubTools(t *testing.T) {
 		"explain",
 		"gitops_settings",
 		"gitops_status",
+		"graph_blast_radius",
 		"landed",
 		"map",
 		"release_check",
@@ -117,8 +118,8 @@ func TestMCPGatewayHandleRequest_ToolsList(t *testing.T) {
 	if err := marshalInto(resp.Result, &result); err != nil {
 		t.Fatalf("decode result: %v", err)
 	}
-	if len(result.Tools) != 10 {
-		t.Fatalf("tool count = %d, want 10", len(result.Tools))
+	if len(result.Tools) != 11 {
+		t.Fatalf("tool count = %d, want 11", len(result.Tools))
 	}
 	for _, tool := range result.Tools {
 		if !tool.Annotations.ReadOnlyHint {

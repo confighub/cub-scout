@@ -49,6 +49,7 @@ Supported tools in standalone mode:
   - explain
   - gitops_status
   - gitops_settings
+  - graph_blast_radius
   - landed
 
 Additional tools in connected mode (when authenticated to ConfigHub):
@@ -587,10 +588,11 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				InputSchema: map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"resource":   map[string]interface{}{"type": "string", "description": "Target resource as <kind>/<name>, e.g. deploy/api"},
-						"namespace":  map[string]interface{}{"type": "string", "description": "Namespace of the target resource (default: default)"},
-						"field_path": map[string]interface{}{"type": "string", "description": "Exact canonical managedFields path, e.g. .spec.replicas"},
-						"context":    map[string]interface{}{"type": "string", "description": "Exact kubeconfig context name"},
+						"resource":             map[string]interface{}{"type": "string", "description": "Target resource as <kind>/<name>, e.g. deploy/api"},
+						"namespace":            map[string]interface{}{"type": "string", "description": "Namespace of the target resource (default: default)"},
+						"field_path":           map[string]interface{}{"type": "string", "description": "Exact canonical managedFields path, e.g. .spec.replicas"},
+						"context":              map[string]interface{}{"type": "string", "description": "Exact kubeconfig context name"},
+						"include_blast_radius": map[string]interface{}{"type": "boolean", "description": "Include blast-radius summary"},
 					},
 					"required":             []string{"resource"},
 					"additionalProperties": false,
@@ -612,6 +614,14 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 						return nil, err
 					}
 				}
+				includeBlast := false
+				if raw, present := arguments["include_blast_radius"]; present {
+					v, ok := raw.(bool)
+					if !ok {
+						return nil, fmt.Errorf("include_blast_radius must be a boolean")
+					}
+					includeBlast = v
+				}
 				args := []string{"before-write", resource}
 				if raw, present := arguments["context"]; present {
 					value, ok := raw.(string)
@@ -625,6 +635,75 @@ func newMCPGatewayWithMode(runner mcpToolRunner, connectedRunner mcpToolRunner, 
 				}
 				if fieldPath != "" {
 					args = append(args, "--field-path", fieldPath)
+				}
+				if includeBlast {
+					args = append(args, "--include-blast-radius")
+				}
+				args = append(args, "--format", "json")
+				return args, nil
+			},
+		},
+		"graph_blast_radius": {
+			Descriptor: mcpToolDescriptor{
+				Name:        "graph_blast_radius",
+				Description: "Read-only ephemeral dependency blast radius for a resource from live namespace reads or a recording (graph blast-radius --format json).",
+				Annotations: readOnly,
+				InputSchema: map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"target":       map[string]interface{}{"type": "string", "description": "Target as <kind>/<name>, e.g. ConfigMap/app-cfg"},
+						"namespace":    map[string]interface{}{"type": "string", "description": "Target namespace (default: default)"},
+						"kube_context": map[string]interface{}{"type": "string", "description": "Exact kubeconfig context for live reads"},
+						"recording":    map[string]interface{}{"type": "string", "description": "Offline YAML/JSON snapshot path"},
+					},
+					"required":             []string{"target"},
+					"additionalProperties": false,
+				},
+			},
+			BuildArgs: func(arguments map[string]interface{}) ([]string, error) {
+				target := argString(arguments, "target")
+				if target == "" {
+					return nil, fmt.Errorf("missing required argument: target")
+				}
+				if _, _, err := parseBlastRadiusTarget(target); err != nil {
+					return nil, err
+				}
+				var ns string
+				if raw, present := arguments["namespace"]; present {
+					value, ok := raw.(string)
+					if !ok {
+						return nil, fmt.Errorf("namespace must be a string")
+					}
+					ns = strings.TrimSpace(value)
+				}
+				var kubeCtx string
+				if raw, present := arguments["kube_context"]; present {
+					value, ok := raw.(string)
+					if !ok || strings.TrimSpace(value) == "" {
+						return nil, fmt.Errorf("kube_context must be a non-empty kubeconfig context name")
+					}
+					kubeCtx = value
+				}
+				var recording string
+				if raw, present := arguments["recording"]; present {
+					value, ok := raw.(string)
+					if !ok || strings.TrimSpace(value) == "" {
+						return nil, fmt.Errorf("recording must be a non-empty local path")
+					}
+					recording = value
+				}
+				if kubeCtx != "" && recording != "" {
+					return nil, fmt.Errorf("recording cannot be combined with kube_context")
+				}
+				args := []string{"graph", "blast-radius", target}
+				if ns != "" {
+					args = append(args, "-n", ns)
+				}
+				if kubeCtx != "" {
+					args = append(args, "--kube-context", kubeCtx)
+				}
+				if recording != "" {
+					args = append(args, "--recording", recording)
 				}
 				args = append(args, "--format", "json")
 				return args, nil

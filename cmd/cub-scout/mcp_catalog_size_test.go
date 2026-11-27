@@ -35,6 +35,7 @@ var mcpCatalogToolCeilings = map[string]int{
 	"explain":                   2800,
 	"gitops_settings":           2400,
 	"gitops_status":             1900,
+	"graph_blast_radius":        700,  // 675 bytes (3.3 ephemeral blast-radius MCP tool), 2026-11-27
 	"landed":                    1300, // A(1) + G1/G2 landing check, 2026-11-24
 	"map":                       2300,
 	"release_check":             2200,
@@ -48,7 +49,8 @@ var mcpCatalogToolCeilings = map[string]int{
 // 31,224.
 // Updated 2026-11-24 when the standalone `landed` tool (A(1) + G1/G2) was added.
 // Updated 2026-11-25 when the standalone `before_write` tool (3.3 pre-write sensor) was added (17233 and 33001 bytes).
-var mcpCatalogTotalCeilings = map[bool]int{false: 17300, true: 33100}
+// Updated 2026-11-27 when `before_write.include_blast_radius` and standalone `graph_blast_radius` (675 bytes) were added (17996 and 33764 bytes).
+var mcpCatalogTotalCeilings = map[bool]int{false: 18000, true: 33800}
 
 func mcpCatalogSizes(connected bool) (map[string]int, int) {
 	gateway := newMCPGatewayWithMode(nil, nil, connected)
@@ -109,7 +111,8 @@ func TestMCPCoreProfileStaysWithinItsDeclaredSize(t *testing.T) {
 	t.Logf("cub_scout_more: %d bytes in the catalog; connected index %d bytes", len(more), len(index))
 	// Raised from 2800 to 3000 on 2026-11-24 when `landed` (A(1) + G1/G2) was added (2981 bytes).
 	// Raised from 3000 to 3300 on 2026-11-25 when `before_write` (3.3 pre-write sensor) was added.
-	if len(index) > 3300 {
-		t.Errorf("the connected index is %d bytes, over its ceiling of 3300", len(index))
+	// Raised from 3300 to 3500 on 2026-11-27 when `graph_blast_radius` was added (3426 bytes).
+	if len(index) > 3500 {
+		t.Errorf("the connected index is %d bytes, over its ceiling of 3500", len(index))
 	}
 }

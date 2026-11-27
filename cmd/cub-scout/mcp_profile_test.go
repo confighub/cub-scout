@@ -97,9 +97,9 @@ func TestMCPToolProfileAllListsEverythingAsBefore(t *testing.T) {
 			t.Errorf("connected=%v: a gateway with no profile changed the tool list", connected)
 		}
 		// And the list itself is the one that existed before profiles did.
-		want := []string{"before_write", "doctor", "explain", "gitops_settings", "gitops_status", "landed", "map", "release_check", "scan", "trace"}
+		want := []string{"before_write", "doctor", "explain", "gitops_settings", "gitops_status", "graph_blast_radius", "landed", "map", "release_check", "scan", "trace"}
 		if connected {
-			want = []string{"before_write", "compare_source_truth", "compare_three_way", "confighub_attestations", "confighub_changeorder_get", "confighub_changesets", "confighub_k8s_resources", "confighub_k8s_types", "confighub_live_status", "confighub_releases", "confighub_resources", "confighub_unit_events", "confighub_unit_get", "confighub_units", "doctor", "explain", "gitops_settings", "gitops_status", "landed", "map", "release_check", "scan", "trace"}
+			want = []string{"before_write", "compare_source_truth", "compare_three_way", "confighub_attestations", "confighub_changeorder_get", "confighub_changesets", "confighub_k8s_resources", "confighub_k8s_types", "confighub_live_status", "confighub_releases", "confighub_resources", "confighub_unit_events", "confighub_unit_get", "confighub_units", "doctor", "explain", "gitops_settings", "gitops_status", "graph_blast_radius", "landed", "map", "release_check", "scan", "trace"}
 		}
 		if got := listedNames(plain); !reflect.DeepEqual(got, want) {
 			t.Errorf("connected=%v: default tools = %v, want %v", connected, got, want)
@@ -160,7 +160,7 @@ func TestCubScoutMoreIndexDescribeAndRun(t *testing.T) {
 			t.Errorf("index summary for %s is %d bytes", entry.Name, len(entry.Summary))
 		}
 	}
-	if want := []string{"before_write", "gitops_settings", "landed", "release_check", "scan", "trace"}; !reflect.DeepEqual(names, want) || index.Profile != "core" {
+	if want := []string{"before_write", "gitops_settings", "graph_blast_radius", "landed", "release_check", "scan", "trace"}; !reflect.DeepEqual(names, want) || index.Profile != "core" {
 		t.Errorf("index = %v (profile %q), want %v", names, index.Profile, want)
 	}
 
@@ -290,8 +290,8 @@ func TestMCPToolProfileFollowsTheSession(t *testing.T) {
 	if want := []string{"compare_source_truth", "confighub_units", "doctor", "explain", "gitops_status", "map", "cub_scout_more"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("after login: %v, want %v", got, want)
 	}
-	if n := len(gateway.unlistedTools()); n != 17 {
-		t.Errorf("after login cub_scout_more reaches %d tools, want 17 (23 less the 6 listed)", n)
+	if n := len(gateway.unlistedTools()); n != 18 {
+		t.Errorf("after login cub_scout_more reaches %d tools, want 18 (24 less the 6 listed)", n)
 	}
 }
 

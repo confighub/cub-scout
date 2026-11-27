@@ -27,14 +27,18 @@ import (
 )
 
 var (
-	beforeWriteNamespace   string
-	beforeWriteFieldPath   string
-	beforeWriteRecording   string
-	beforeWriteKubeContext string
-	beforeWriteFormat      string
+	beforeWriteNamespace          string
+	beforeWriteFieldPath          string
+	beforeWriteRecording          string
+	beforeWriteKubeContext        string
+	beforeWriteFormat             string
+	beforeWriteIncludeBlastRadius bool
 )
 
-const beforeWriteCostCoverage = "before-write-session-client"
+const (
+	beforeWriteCostCoverage            = "before-write-session-client"
+	beforeWriteBlastRadiusMaxWorkloads = 5
+)
 
 var beforeWriteCmd = &cobra.Command{
 	Use:   "before-write <kind/name> or <kind> <name>",
@@ -62,6 +66,7 @@ func init() {
 	beforeWriteCmd.Flags().StringVar(&beforeWriteRecording, "recording", "", "Offline YAML/JSON cluster snapshot file to evaluate without cluster access")
 	beforeWriteCmd.Flags().StringVar(&beforeWriteKubeContext, "kube-context", "", "Exact kube context for all Kubernetes reads; does not change the current context")
 	beforeWriteCmd.Flags().StringVar(&beforeWriteFormat, "format", "ascii", "Output format: ascii, json, md")
+	beforeWriteCmd.Flags().BoolVar(&beforeWriteIncludeBlastRadius, "include-blast-radius", false, "Include bounded dependency blast-radius summary (affected workloads capped at 5)")
 }
 
 // beforeWriteOutput is the compact JSON document emitted by
@@ -73,9 +78,18 @@ type beforeWriteOutput struct {
 	Deployer         *beforeWriteDeployerSettings `json:"deployer,omitempty"`
 	FieldAttribution *FieldAttributionSummary     `json:"fieldAttribution,omitempty"`
 	PDBs             []beforeWritePDB             `json:"pdbs,omitempty"`
+	BlastRadius      *beforeWriteBlastRadius      `json:"blastRadius,omitempty"`
 	MutationCause    agent.FieldMutationCause     `json:"mutationCause,omitempty"`
 	MutationManager  string                       `json:"mutationManager,omitempty"`
 	Answer           *mapsvc.Answer               `json:"answer"`
+}
+
+// beforeWriteBlastRadius is a compact, bounded blast-radius summary attached to
+// beforeWriteOutput when --include-blast-radius is enabled.
+type beforeWriteBlastRadius struct {
+	AffectedWorkloadsCount int      `json:"affectedWorkloadsCount"`
+	AffectedWorkloads      []string `json:"affectedWorkloads"`
+	Truncated              bool     `json:"truncated"`
 }
 
 type beforeWriteTarget struct {
@@ -134,6 +148,10 @@ type beforeWriteStore interface {
 	ListPDBs(ctx context.Context, namespace string) ([]unstructured.Unstructured, error)
 }
 
+type beforeWriteBlastRadiusStore interface {
+	ComputeBlastRadius(ctx context.Context, kind, name, namespace string, opts beforeWriteOptions) (blastRadiusOutput, error)
+}
+
 var pdbPolicyV1GVR = schema.GroupVersionResource{Group: "policy", Version: "v1", Resource: "poddisruptionbudgets"}
 var argoAppProjectGVR = schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "appprojects"}
 
@@ -160,8 +178,43 @@ func (s dynamicBeforeWriteStore) ListPDBs(ctx context.Context, namespace string)
 	return list.Items, nil
 }
 
+func (s dynamicBeforeWriteStore) ComputeBlastRadius(ctx context.Context, kind, name, namespace string, opts beforeWriteOptions) (blastRadiusOutput, error) {
+	objects, listTruncated, err := collectLiveBlastRadiusObjects(ctx, s.dyn, namespace, defaultSnapshotMaxObjects)
+	if err != nil {
+		return blastRadiusOutput{}, err
+	}
+	observedAt := opts.ObservedAt
+	if observedAt.IsZero() {
+		observedAt = blastRadiusNow().UTC()
+	}
+	snapshot := recordedObjectSnapshot{
+		Objects:       objects,
+		ObservedAt:    observedAt.UTC().Format(time.RFC3339),
+		SourceContext: opts.Context,
+	}
+	return computeBlastRadiusWithMode(snapshot, kind, name, namespace, true, listTruncated), nil
+}
+
 type recordedBeforeWriteStore struct {
 	objects []*unstructured.Unstructured
+}
+
+func (s recordedBeforeWriteStore) ComputeBlastRadius(_ context.Context, kind, name, namespace string, opts beforeWriteOptions) (blastRadiusOutput, error) {
+	var snap recordedObjectSnapshot
+	if opts.Recorded != nil {
+		snap = *opts.Recorded
+	} else {
+		observedAt := opts.ObservedAt
+		if observedAt.IsZero() {
+			observedAt = time.Now().UTC()
+		}
+		snap = recordedObjectSnapshot{
+			Objects:       s.objects,
+			SourceContext: opts.Context,
+			ObservedAt:    observedAt.UTC().Format(time.RFC3339),
+		}
+	}
+	return computeBlastRadius(snap, kind, name, namespace), nil
 }
 
 func (s recordedBeforeWriteStore) GetResource(_ context.Context, kind, name, namespace string) (*unstructured.Unstructured, error) {
@@ -232,14 +285,15 @@ func beforeWriteGVRMatchesObject(gvr schema.GroupVersionResource, obj *unstructu
 }
 
 type beforeWriteOptions struct {
-	Context    string
-	Kind       string
-	Name       string
-	Namespace  string
-	FieldPath  string
-	Recorded   *recordedObjectSnapshot
-	ObservedAt time.Time
-	Cost       *agent.KubernetesReadCost
+	Context            string
+	Kind               string
+	Name               string
+	Namespace          string
+	FieldPath          string
+	IncludeBlastRadius bool
+	Recorded           *recordedObjectSnapshot
+	ObservedAt         time.Time
+	Cost               *agent.KubernetesReadCost
 }
 
 var newBeforeWriteSessionForSelection = newTraceSessionForSelection
@@ -286,13 +340,14 @@ func runBeforeWrite(cmd *cobra.Command, args []string) error {
 		}
 		store := recordedBeforeWriteStore{objects: snapshot.Objects}
 		out := evaluateBeforeWrite(ctx, store, beforeWriteOptions{
-			Context:    snapshot.SourceContext,
-			Kind:       kind,
-			Name:       name,
-			Namespace:  ns,
-			FieldPath:  strings.TrimSpace(beforeWriteFieldPath),
-			Recorded:   &snapshot,
-			ObservedAt: offlineRecordingObservedAt(snapshot),
+			Context:            snapshot.SourceContext,
+			Kind:               kind,
+			Name:               name,
+			Namespace:          ns,
+			FieldPath:          strings.TrimSpace(beforeWriteFieldPath),
+			IncludeBlastRadius: beforeWriteIncludeBlastRadius,
+			Recorded:           &snapshot,
+			ObservedAt:         offlineRecordingObservedAt(snapshot),
 		})
 		return renderBeforeWriteOutput(cmd.OutOrStdout(), out, format)
 	}
@@ -301,12 +356,13 @@ func runBeforeWrite(cmd *cobra.Command, args []string) error {
 	session, sessErr := newBeforeWriteSessionForSelection(selection)
 	if sessErr != nil {
 		out := buildBeforeWriteReadErrorOutput(beforeWriteOptions{
-			Context:    selection.name,
-			Kind:       kind,
-			Name:       name,
-			Namespace:  ns,
-			FieldPath:  strings.TrimSpace(beforeWriteFieldPath),
-			ObservedAt: time.Now().UTC(),
+			Context:            selection.name,
+			Kind:               kind,
+			Name:               name,
+			Namespace:          ns,
+			FieldPath:          strings.TrimSpace(beforeWriteFieldPath),
+			IncludeBlastRadius: beforeWriteIncludeBlastRadius,
+			ObservedAt:         time.Now().UTC(),
 		}, sessErr)
 		return renderBeforeWriteOutput(cmd.OutOrStdout(), out, format)
 	}
@@ -317,12 +373,13 @@ func runBeforeWrite(cmd *cobra.Command, args []string) error {
 	}
 
 	out := evaluateBeforeWrite(ctx, dynamicBeforeWriteStore{dyn: dynClient}, beforeWriteOptions{
-		Context:    session.contextLabel(),
-		Kind:       kind,
-		Name:       name,
-		Namespace:  ns,
-		FieldPath:  strings.TrimSpace(beforeWriteFieldPath),
-		ObservedAt: time.Now().UTC(),
+		Context:            session.contextLabel(),
+		Kind:               kind,
+		Name:               name,
+		Namespace:          ns,
+		FieldPath:          strings.TrimSpace(beforeWriteFieldPath),
+		IncludeBlastRadius: beforeWriteIncludeBlastRadius,
+		ObservedAt:         time.Now().UTC(),
 	})
 	if session.meter != nil {
 		cost := session.meter.Snapshot()
@@ -449,6 +506,18 @@ func evaluateBeforeWrite(ctx context.Context, store beforeWriteStore, opts befor
 		}
 	}
 
+	var blastErr error
+	if opts.IncludeBlastRadius {
+		if brStore, ok := store.(beforeWriteBlastRadiusStore); ok {
+			brOut, err := brStore.ComputeBlastRadius(ctx, out.Target.Kind, out.Target.Name, out.Target.Namespace, opts)
+			if err != nil {
+				blastErr = err
+			} else {
+				out.BlastRadius = summarizeBeforeWriteBlastRadius(brOut)
+			}
+		}
+	}
+
 	out.Answer = buildBeforeWriteAnswer(out, beforeWriteAnswerFacts{
 		objectRead:        true,
 		owner:             owner,
@@ -456,11 +525,29 @@ func evaluateBeforeWrite(ctx context.Context, store beforeWriteStore, opts befor
 		deployerRead:      deployerObj != nil,
 		deployerError:     readErrString(deployerErr),
 		pdbError:          readErrString(pdbErr),
+		blastError:        readErrString(blastErr),
 		recorded:          opts.Recorded,
 		observedAt:        observedAt,
 		cost:              opts.Cost,
 	})
 	return out
+}
+
+func summarizeBeforeWriteBlastRadius(br blastRadiusOutput) *beforeWriteBlastRadius {
+	total := len(br.AffectedWorkloads)
+	truncated := br.Truncated
+	workloads := br.AffectedWorkloads
+	if len(workloads) > beforeWriteBlastRadiusMaxWorkloads {
+		workloads = workloads[:beforeWriteBlastRadiusMaxWorkloads]
+		truncated = true
+	}
+	out := make([]string, len(workloads))
+	copy(out, workloads)
+	return &beforeWriteBlastRadius{
+		AffectedWorkloadsCount: total,
+		AffectedWorkloads:      out,
+		Truncated:              truncated,
+	}
 }
 
 func beforeWriteDeployerRef(owner agent.Ownership) (schema.GroupVersionResource, string, string, bool) {
@@ -683,6 +770,7 @@ type beforeWriteAnswerFacts struct {
 	deployerRead      bool
 	deployerError     string
 	pdbError          string
+	blastError        string
 	recorded          *recordedObjectSnapshot
 	observedAt        time.Time
 	cost              *agent.KubernetesReadCost
@@ -792,6 +880,14 @@ func buildBeforeWriteAnswer(out beforeWriteOutput, f beforeWriteAnswerFacts) *ma
 			Kind:   unknownKindForError(f.pdbError),
 			Reason: "PDB list failed",
 			Quoted: truncateBeforeWriteQuoted(f.pdbError, 100),
+		})
+	}
+	if f.blastError != "" {
+		answer.Unknowns = append(answer.Unknowns, mapsvc.AnswerUnknown{
+			What:   "blast radius",
+			Kind:   unknownKindForError(f.blastError),
+			Reason: "blast-radius read failed",
+			Quoted: truncateBeforeWriteQuoted(f.blastError, 100),
 		})
 	}
 	if f.recorded != nil {
@@ -934,6 +1030,16 @@ func renderBeforeWriteASCII(out beforeWriteOutput) string {
 			b.WriteByte('\n')
 		}
 	}
+	if out.BlastRadius != nil {
+		fmt.Fprintf(&b, "Blast Radius: %d affected workload(s)", out.BlastRadius.AffectedWorkloadsCount)
+		if out.BlastRadius.Truncated {
+			b.WriteString(" (truncated)")
+		}
+		b.WriteByte('\n')
+		for _, wl := range out.BlastRadius.AffectedWorkloads {
+			fmt.Fprintf(&b, "  - %s\n", wl)
+		}
+	}
 	if out.Answer != nil {
 		fmt.Fprintf(&b, "State: %s (%s)\n", out.Answer.State, out.Answer.Reason)
 		for _, u := range out.Answer.Unknowns {
@@ -970,6 +1076,16 @@ func renderBeforeWriteMarkdown(out beforeWriteOutput) string {
 			names = append(names, "`"+p.Name+"`")
 		}
 		fmt.Fprintf(&b, "- **Matching PDBs:** %s\n", strings.Join(names, ", "))
+	}
+	if out.BlastRadius != nil {
+		trunc := ""
+		if out.BlastRadius.Truncated {
+			trunc = " (truncated)"
+		}
+		fmt.Fprintf(&b, "- **Blast Radius:** %d affected workload(s)%s\n", out.BlastRadius.AffectedWorkloadsCount, trunc)
+		for _, wl := range out.BlastRadius.AffectedWorkloads {
+			fmt.Fprintf(&b, "  - `%s`\n", wl)
+		}
 	}
 	if out.Answer != nil {
 		fmt.Fprintf(&b, "- **State:** `%s` (`%s`)\n", out.Answer.State, out.Answer.Reason)

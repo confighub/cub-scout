@@ -540,3 +540,103 @@ users:
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "nonexistent-ctx")
 }
+
+func TestGraphBlastRadius_MCPToolRegistrationAndRecording(t *testing.T) {
+	dir := t.TempDir()
+	recPath := filepath.Join(dir, "flux-blast.yaml")
+	require.NoError(t, os.WriteFile(recPath, []byte(fluxMultiHopBlastFixture), 0o600))
+
+	prevNS, prevRec, prevCtx, prevFmt := graphBlastRadiusNamespace, graphBlastRadiusRecording, graphBlastRadiusKubeContext, graphBlastRadiusFormat
+	t.Cleanup(func() {
+		graphBlastRadiusNamespace, graphBlastRadiusRecording, graphBlastRadiusKubeContext, graphBlastRadiusFormat = prevNS, prevRec, prevCtx, prevFmt
+		graphBlastRadiusCmd.SetOut(nil)
+		if f := graphBlastRadiusCmd.Flags().Lookup("kube-context"); f != nil {
+			f.Changed = false
+		}
+	})
+
+	var capturedArgs []string
+	runner := func(_ context.Context, args []string) (string, error) {
+		capturedArgs = append([]string(nil), args...)
+		// Execute the real in-memory graph blast-radius logic for --recording calls.
+		graphBlastRadiusNamespace = ""
+		graphBlastRadiusRecording = ""
+		graphBlastRadiusKubeContext = ""
+		graphBlastRadiusFormat = "json"
+		if f := graphBlastRadiusCmd.Flags().Lookup("kube-context"); f != nil {
+			f.Changed = false
+		}
+		var target string
+		for i := 2; i < len(args); i++ {
+			switch args[i] {
+			case "-n":
+				i++
+				graphBlastRadiusNamespace = args[i]
+			case "--recording":
+				i++
+				graphBlastRadiusRecording = args[i]
+			case "--format":
+				i++
+				graphBlastRadiusFormat = args[i]
+			default:
+				if target == "" {
+					target = args[i]
+				}
+			}
+		}
+		var buf bytes.Buffer
+		graphBlastRadiusCmd.SetOut(&buf)
+		if err := runGraphBlastRadius(graphBlastRadiusCmd, []string{target}); err != nil {
+			return "", err
+		}
+		return buf.String(), nil
+	}
+
+	gateway := newMCPGateway(runner)
+	tool, ok := gateway.tools["graph_blast_radius"]
+	require.True(t, ok, "graph_blast_radius must be registered as a standalone MCP tool")
+	require.NotNil(t, tool.Descriptor.Annotations)
+	require.True(t, tool.Descriptor.Annotations.ReadOnlyHint)
+
+	// 1. Recording execution through MCP gateway returns structuredContent and exact blast-radius output.
+	reply := gateway.runNamedTool(context.Background(), "graph_blast_radius", tool, map[string]interface{}{
+		"target":    "ConfigMap/app-cfg",
+		"namespace": "prod",
+		"recording": recPath,
+	})
+	require.Equal(t, false, reply["isError"], "reply: %v", reply)
+	require.Equal(t, []string{"graph", "blast-radius", "ConfigMap/app-cfg", "-n", "prod", "--recording", recPath, "--format", "json"}, capturedArgs)
+	require.NotNil(t, reply["structuredContent"])
+
+	content, ok := reply["content"].([]map[string]string)
+	require.True(t, ok)
+	require.Len(t, content, 1)
+	var decoded blastRadiusOutput
+	require.NoError(t, json.Unmarshal([]byte(content[0]["text"]), &decoded))
+	require.Equal(t, "ConfigMap/prod/app-cfg", decoded.Target)
+	require.Equal(t, []string{"Deployment/prod/api"}, decoded.AffectedWorkloads)
+	require.False(t, decoded.Truncated)
+	requireConformingAnswer(t, decoded.Answer, explainStates, explainReasons)
+	require.Equal(t, explainStateExplained, decoded.Answer.State)
+
+	// 2. Live kube_context BuildArgs.
+	liveArgs, err := tool.BuildArgs(map[string]interface{}{
+		"target":       "ConfigMap/app-cfg",
+		"namespace":    "prod",
+		"kube_context": "prod-east",
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"graph", "blast-radius", "ConfigMap/app-cfg", "-n", "prod", "--kube-context", "prod-east", "--format", "json"}, liveArgs)
+
+	// 3. Reject mutual exclusion and malformed target.
+	_, err = tool.BuildArgs(map[string]interface{}{
+		"target":       "ConfigMap/app-cfg",
+		"kube_context": "prod-east",
+		"recording":    recPath,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "recording cannot be combined with kube_context")
+
+	_, err = tool.BuildArgs(map[string]interface{}{"target": "no-slash"})
+	require.Error(t, err)
+}
