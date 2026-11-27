@@ -1,8 +1,20 @@
 # Start Here
 
-Start with a question: what is running, where did it come from, is delivery
-stuck, or does live state match the configuration you expected? Scout gathers
-read-only evidence without becoming another deployment controller.
+**Don't let your deploy controller or your coding agent grade its own rollout.**
+
+Start with a question: is it safe to write this change, what is running, where
+did it come from, did my revision reach running Pods, or did it land across my
+fleet? Scout gathers strictly read-only, deterministic evidence without
+becoming another deployment controller.
+
+| Goal | Start here |
+|---|---|
+| **Coding agent / `cub mini` write loop** | [Agent Write Loop](../howto/agent-write-loop.md) · [`cub mini` Integration Contract](../howto/cub-mini-integration.md) |
+| **CI/CD promotion gate (GitHub Actions)** | [Reusable `verify-landed` CI Gate](../../examples/ci-gates/verify-landed/) |
+| **Multi-cluster fleet proof (`dev → staging → prod`)** | [Fleet Promotion Proof](../howto/fleet-promotion-proof.md) · [Runnable 4-Cluster Example](../../examples/fleet-promotion-proof/) |
+| **Ops bots (`k8sbot`, Pilot, Slack/incident)** | [Ops-Bot Consumer Contract](../../examples/bot/consumer-contract.md) · [Hardened Bot Deploy Kit](../../examples/bot/) |
+| **Check whether an image is deployed** | [Is This Image Deployed?](../howto/is-this-image-deployed.md) |
+| **Token cost & 3.x roadmap** | [Answer Sizes (99.78% smaller)](../reference/answer-sizes.md) · [3.x Roadmap](../proposals/vision-3.x.md) |
 
 Choose the **`cub` plugin** (`cub scout`, primary), the **standalone CLI/TUI** (`cub-scout`), an **MCP server** launched by
 your agent host, a **watch stream**, or an **in-cluster bot**. The
@@ -19,13 +31,6 @@ Checking an application image? Start with
 v2.12.0 limits, the **v2.12.1** Deployment proof, the difference between
 configuration and image digests, and what pod-reported identity can and cannot
 prove.
-
-Wiring `cub-scout` into **`cub mini`**, a coding agent, an ops bot, or a CI
-gate? Start with the [Agent Write Loop](../howto/agent-write-loop.md) and
-[`cub mini` Integration Contract](../howto/cub-mini-integration.md) for
-`before-write`, `landed --verify-pod-images`, offline `snapshot` +
-`--recording`, Ed25519 `receipt sign` / `verify` / `verify-fleet`, and the
-reusable [CI Promotion Gate (`verify-landed`)](../../examples/ci-gates/verify-landed/).
 
 ---
 

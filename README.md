@@ -1,22 +1,70 @@
 # cub-scout
 
-**GitOps explorer for agents.** cub-scout tells an agent what its change
-actually did, and it is not the thing that made the change.
+**Don't let your deploy controller or your coding agent grade its own rollout.**
 
-It is a read-only witness for GitOps clusters: who owns each object, which
-revision it came from, and whether what the deploy tool reports matches the
-cluster. It is built for AI agents first (MCP tools and JSON), and for the
-people and scripts they work with. Unknowns are stated, never guessed.
+`cub-scout` is the **independent, deterministic, strictly read-only witness for
+GitOps and AI agents** on Kubernetes. It tells an agent, CI pipeline, ops bot,
+or platform engineer what is actually running, who owns each field, whether a
+change will be reverted, and whether an anchored revision genuinely reached
+running Pods — at **99.78% fewer bytes** than raw Kubernetes objects, with
+**zero LLM inference** and **zero cluster write permissions**. Unknowns are
+stated, never guessed.
 
 ```sh
 # ConfigHub plugin (primary)
 cub plugin install confighub/cub-scout
-cub scout trace deploy/argobot -n argobot
+cub scout before-write deploy/api -n prod --field-path .spec.replicas --format json
+cub scout landed deploy/api -n prod --revision <sha> --verify-pod-images --wait 60s --format json
 
 # Or standalone binary
 brew install confighub/tap/cub-scout
 cub-scout trace deploy/argobot -n argobot
 ```
+
+[v3.2.0 release](https://github.com/confighub/cub-scout/releases/tag/v3.2.0)
+| [Start here](docs/getting-started/start-here.md)
+| [Agent write loop](docs/howto/agent-write-loop.md)
+| [`cub mini` contract](docs/howto/cub-mini-integration.md)
+| [Fleet promotion proof](docs/howto/fleet-promotion-proof.md)
+| [CI gate](examples/ci-gates/verify-landed/)
+| [Answer sizes (99.78% smaller)](docs/reference/answer-sizes.md)
+| [3.x roadmap](docs/proposals/vision-3.x.md)
+
+## Why teams and agent builders use cub-scout
+
+| Problem | How `cub-scout` solves it |
+|---|---|
+| **Agents & controllers grade their own homework** | Strictly read-only (`get`/`list`/`watch` only). `cub scout landed --verify-pod-images` checks running Pod `status.containerStatuses[].imageID` digests directly against your expected revision/image — returning `not-landed` when Pods disagree even if Flux or Argo CD claims `Synced`/`Ready`. |
+| **`kubectl` blows up agent token budgets** | CI-enforced compact JSON byte ceilings across all 13 answer surfaces (**99.78% smaller** than raw Kubernetes objects across [24 benchmarked cluster questions](docs/reference/answer-sizes.md); **82.98% smaller** on `graph blast-radius`), plus ~89-byte `--if-unchanged` delta polls and `--view summary`. |
+| **Multi-agent & GitOps write collisions** | One `<1 KB` pre-write check (`cub scout before-write`) returns live field value, `managedFields` / `agent/<tool>[/<run>]` writer contention, Flux/Argo revert risk, `syncWindows`, `spec.suspend`, PodDisruptionBudgets, and optional `--include-blast-radius` before a write happens. |
+| **No durable proof across clusters or air-gapped environments** | Capture once with secret-stripped `cub scout snapshot`, run `landed`, `trace`, `doctor`, `before-write`, and `graph blast-radius` offline with `--recording`, sign offline Ed25519 receipts (`receipt sign`/`verify`), verify multi-cluster promotion (`receipt verify-fleet`), and export standard in-toto v1 attestations (`receipt export-attestation`). |
+| **Vendor lock-in vs multi-cluster scale** | Start standalone in 30 seconds against any kubeconfig context with zero lock-in. Add optional [ConfigHub](https://confighub.com) connected mode (`--with-confighub`) for governed desired-vs-live comparison, delivery history, and multi-cluster fleet promotion gates. |
+
+## The 4-step read-only agent write loop
+
+```sh
+# 1. Before writing: ownership, contention, revert risk, syncWindows, PDBs (<1 KB)
+cub scout before-write deploy/api -n prod --field-path .spec.replicas --include-blast-radius --format json
+
+# 2. After writing: prove revision + running Pod imageIDs across Flux, Argo CD, Rollouts, Helm, kro, Crossplane
+cub scout landed deploy/api -n prod --revision <sha> --verify-pod-images --wait 60s --format json > landed.json
+
+# 3. Sign & verify tamper-evident offline Ed25519 proof (and export in-toto v1 attestation)
+cub scout receipt sign --input landed.json --key priv.pem -o prod-east.signed.json
+cub scout receipt export-attestation --input prod-east.signed.json --pubkey pub.pem -o prod-east.intoto.json
+
+# 4. Prove multi-cluster promotion (dev -> staging -> prod-east -> prod-west) offline, fail-closed
+cub scout receipt verify-fleet --inputs ./receipts --pubkey pub.pem --revision <sha> \
+  --require-clusters dev,staging,prod-east,prod-west --format json
+```
+
+See the full walkthroughs: [Agent write loop](docs/howto/agent-write-loop.md),
+[`cub mini` integration contract](docs/howto/cub-mini-integration.md),
+[Fleet promotion proof](docs/howto/fleet-promotion-proof.md),
+[Reusable GitHub Actions CI gate](examples/ci-gates/verify-landed/), and
+[Ops-bot consumer contract](examples/bot/consumer-contract.md).
+
+## Real trace output (live CI cluster)
 
 ```text
 TRACE: Deployment/argobot in argobot
@@ -44,12 +92,8 @@ timing, secret and event lines are left out. For an
 agent, the same answer is JSON (`--format json`) or an MCP tool: point your
 MCP client at `cub-scout mcp serve`, a local read-only stdio server.
 
-[v3.0.0 release](https://github.com/confighub/cub-scout/releases/tag/v3.0.0)
-| [Start here](docs/getting-started/start-here.md)
-| [Agent write loop](docs/howto/agent-write-loop.md)
-| [Is this image deployed?](docs/howto/is-this-image-deployed.md)
+[Is this image deployed?](docs/howto/is-this-image-deployed.md)
 | [Command guide](CLI-GUIDE.md)
-| [Answer sizes (99.78% smaller)](docs/reference/answer-sizes.md)
 | [What "for an agent" means](docs/reference/agentic-gitops-observability.md)
 
 ## What is measured, and what is not
@@ -217,19 +261,23 @@ coalescing, opt-in watch-backed idle observation, and a new `resource.deleted`
 event), plus local bot images built from verified release archives. See the
 [release notes](docs/releases/v2.11.0.md).
 
-**v3.1.0 is the latest published release.** Completes the strictly read-only
-agent write loop with `cub scout before-write` (CLI + MCP), offline Ed25519
+**v3.2.0 is the latest published release.** Extends the strictly read-only
+agent write loop with a real-cluster Argo Rollouts `v1.8.3` CI proof lane,
+live-cluster bounded `graph blast-radius` (CLI + MCP `graph_blast_radius` +
+`before-write --include-blast-radius`), a drop-in GitHub Actions CI promotion
+gate (`examples/ci-gates/verify-landed/`), an ops-bot consumer contract
+(`examples/bot/consumer-contract.md`), offline multi-cluster
+`cub scout receipt verify-fleet` (with a runnable 4-cluster example in
+`examples/fleet-promotion-proof/`), offline in-toto v1 attestation export
+(`cub scout receipt export-attestation`), and the `cub mini` hook contract —
+building on [v3.1.0](docs/releases/v3.1.0.md) (`before-write`, offline Ed25519
 `receipt sign`/`verify`, offline `trace --recording` + sanitized Pod/PDB
-snapshots, standard `answer` envelopes on `watch` and `bot`, a multi-arch GHCR
-bot deploy kit, Argo Rollouts parity, and ephemeral offline `graph blast-radius`
-— building on [v3.0.0](docs/releases/v3.0.0.md)'s `cub scout landed` (with
-`--verify-pod-images`, bounded read-only `--wait`, and Flux/Argo CD/Helm/kro/Crossplane
-parity), secret-stripped `cub scout snapshot` + offline `--recording`, field
-writer-contention and revert prediction, `--if-unchanged` delta answers,
-`--view summary`, and CI-enforced byte ceilings (99.78% smaller answers in
-[answer-sizes.md](docs/reference/answer-sizes.md)). See the
-[v3.1.0 release notes](docs/releases/v3.1.0.md) and
-[agent write-loop guide](docs/howto/agent-write-loop.md).
+snapshots, `watch`/`bot` `answer` envelopes, multi-arch GHCR bot kit) and
+[v3.0.0](docs/releases/v3.0.0.md) (`landed --verify-pod-images`, Flux/Argo
+CD/Helm/kro/Crossplane parity, `snapshot`, `--if-unchanged`, 99.78% smaller
+answers in [answer-sizes.md](docs/reference/answer-sizes.md)). See the
+[v3.2.0 release notes](docs/releases/v3.2.0.md) and
+[3.x roadmap](docs/proposals/vision-3.x.md).
 
 **v2.19.0** (`release check` under Flux): `release check` under Flux now says
 "not yet" (`WATCH`) when the source is on another revision, as it does for
