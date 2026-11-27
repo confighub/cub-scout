@@ -148,3 +148,61 @@ Reproduce:
 PYTHONDONTWRITEBYTECODE=1 python3 evals/scripts/measure_bytes_tokens.py --format md
 PYTHONDONTWRITEBYTECODE=1 python3 evals/scripts/test_measure_bytes_tokens.py
 ```
+
+## v3.1.0 standing ceilings and `graph blast-radius` benchmark
+
+Measured on 2026-11-26 against published `v3.1.0` (`084a9e5f`). Zero model
+calls, zero credits, zero network, zero live cluster access.
+
+### CI-enforced `answer` block ceilings (13 surfaces)
+
+`cmd/cub-scout/answer_size_ceilings_test.go` enforces compact-JSON byte
+ceilings on every answer-carrying command and streaming surface. `v3.1.0` added
+three new surfaces (`before_write`, `bot`, and `watch`), bringing the total to
+**9,302 bytes (~2,326 tokens) across 13 answers**:
+
+| Surface | Introduced / updated | Measured compact JSON (bytes / ~tokens) | CI ceiling (bytes) |
+|---|---|---:|---:|
+| `before_write` | **v3.1.0** (`#1027`) | 672 / 168 | 700 |
+| `bot` | **v3.1.0** (`#1025`, `#596`) | 624 / 156 | 700 |
+| `compare_source_truth` | v3.0.0 | 336 / 84 | 400 |
+| `doctor` | v3.0.0 | 418 / 105 | 500 |
+| `explain` | v3.0.0 | 821 / 206 | 900 |
+| `gitops_settings` | v3.0.0 | 962 / 241 | 1,000 |
+| `gitops_status` | v3.0.0 | 842 / 211 | 900 |
+| `landed` | v3.0.0 | 655 / 164 | 700 |
+| `map` | v3.0.0 | 387 / 97 | 400 |
+| `release_check` | v3.0.0 | 1,548 / 387 | 1,600 |
+| `scan` | v3.0.0 | 600 / 150 | 700 |
+| `trace` | v3.0.0 | 828 / 207 | 900 |
+| `watch` | **v3.1.0** (`#1025`, `#596`) | 609 / 153 | 700 |
+| **Total (13 answers)** | — | **9,302 / 2,326** | **10,100** |
+
+### Offline `graph blast-radius` deterministic benchmark (4 multi-controller cases)
+
+Measured with `PYTHONDONTWRITEBYTECODE=1 python3 evals/scripts/measure_blast_radius.py --format md`
+(`#1032`). Compares the raw recorded multi-document YAML snapshot against the
+bounded `cub-scout graph blast-radius ... --recording <file> --format json`
+output (token estimate `ceil(utf8_bytes / 4)`). The 4-hop Flux compact JSON
+answer (**1,084 bytes**) is also CI-enforced at `<= 1,200` bytes in
+`cmd/cub-scout/graph_blast_radius_test.go`.
+
+| Case | Controller | Raw snapshot (bytes / ~tokens) | Blast-radius JSON (bytes / ~tokens) | Answer % of raw | Reduction | Nodes (anc/desc/wl) | Truncated |
+|---|---|---:|---:|---:|---:|---:|---|
+| `flux-4hop-configmap` | flux | 10,474 / 2,619 | 1,084 / 271 | 10.35% | 89.65% | 2/2/1 | false |
+| `argo-secret-fanout` | argocd | 11,367 / 2,842 | 1,393 / 349 | 12.25% | 87.75% | 1/6/3 | false |
+| `flux-helmrelease-shared-cm` | flux-helm | 10,536 / 2,634 | 1,205 / 302 | 11.44% | 88.56% | 2/3/2 | false |
+| `large-snapshot-truncation` | flux | 22,157 / 5,540 | 5,597 / 1,400 | 25.26% | 74.74% | 0/50/50 | true |
+| **Total (4 cases)** | — | **54,534 / 13,635** | **9,279 / 2,322** | **17.02%** | **82.98%** | — | — |
+
+**Caveat:** Measures raw recorded snapshot bytes versus bounded offline
+`graph blast-radius` JSON answer bytes only; smaller evidence does not by
+itself prove agent accuracy or dollar savings.
+
+Reproduce:
+
+```bash
+go test ./cmd/cub-scout -v -run 'TestAnswerBlocksStayWithinDeclaredSizeCeilings|TestBlastRadius'
+PYTHONDONTWRITEBYTECODE=1 python3 evals/scripts/measure_blast_radius.py --format md
+PYTHONDONTWRITEBYTECODE=1 python3 evals/scripts/test_measure_blast_radius.py
+```
