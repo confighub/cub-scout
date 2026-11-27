@@ -1,6 +1,6 @@
 # cub-scout
 
-**Don't let your deploy controller or your coding agent grade its own rollout.**
+**Know what is actually running in Kubernetes — who owns it, what will revert your change, and whether your deploy really landed.**
 
 `cub-scout` is the **independent, deterministic, strictly read-only witness for
 GitOps and AI agents** on Kubernetes. It tells an agent, CI pipeline, ops bot,
@@ -34,7 +34,7 @@ cub-scout trace deploy/argobot -n argobot
 
 | Problem | How `cub-scout` solves it |
 |---|---|
-| **Agents & controllers grade their own homework** | Strictly read-only (`get`/`list`/`watch` only). `cub scout landed --verify-pod-images` checks running Pod `status.containerStatuses[].imageID` digests directly against your expected revision/image — returning `not-landed` when Pods disagree even if Flux or Argo CD claims `Synced`/`Ready`. |
+| **"Synced" doesn't prove your code is running** | Strictly read-only (`get`/`list`/`watch` only). `cub scout landed --verify-pod-images` checks running Pod `status.containerStatuses[].imageID` digests directly against your expected revision/image — returning `not-landed` when Pods disagree even if Flux or Argo CD claims `Synced`/`Ready`. |
 | **`kubectl` blows up agent token budgets** | CI-enforced compact JSON byte ceilings across all 13 answer surfaces (**99.78% smaller** than raw Kubernetes objects across [24 benchmarked cluster questions](docs/reference/answer-sizes.md); **82.98% smaller** on `graph blast-radius`), plus ~89-byte `--if-unchanged` delta polls and `--view summary`. |
 | **Multi-agent & GitOps write collisions** | One `<1 KB` pre-write check (`cub scout before-write`) returns live field value, `managedFields` / `agent/<tool>[/<run>]` writer contention, Flux/Argo revert risk, `syncWindows`, `spec.suspend`, PodDisruptionBudgets, and optional `--include-blast-radius` before a write happens. |
 | **No durable proof across clusters or air-gapped environments** | Capture once with secret-stripped `cub scout snapshot`, run `landed`, `trace`, `doctor`, `before-write`, and `graph blast-radius` offline with `--recording`, sign offline Ed25519 receipts (`receipt sign`/`verify`), verify multi-cluster promotion (`receipt verify-fleet`), and export standard in-toto v1 attestations (`receipt export-attestation`). |

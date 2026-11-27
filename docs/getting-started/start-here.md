@@ -1,6 +1,6 @@
 # Start Here
 
-**Don't let your deploy controller or your coding agent grade its own rollout.**
+**Know what is actually running in Kubernetes — who owns it, what will revert your change, and whether your deploy really landed.**
 
 Start with a question: is it safe to write this change, what is running, where
 did it come from, did my revision reach running Pods, or did it land across my
