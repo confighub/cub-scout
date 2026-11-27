@@ -1,25 +1,19 @@
-# cub-scout 3.x Vision & Roadmap (3.1 – 3.5)
+# cub-scout 3.x Vision & Roadmap (3.0 – 3.5)
 
-**Status (2026-11-26):**
-- **`v3.0.0` (published 2026-11-25):** Shipped at https://github.com/confighub/cub-scout/releases/tag/v3.0.0 (`03a79769`) — `/v3` contract (`#991`–`#995`, `#1000`), `cub scout landed` with independent Pod/image-digest witness (`--verify-pod-images`) and multi-controller parity (Flux, Argo CD, Helm v3/v4, kro, Crossplane, honest `not-observable` for Sveltos; `Deployment`, `StatefulSet`, `DaemonSet`, `Job`, `CronJob`), zero-cluster `cub scout snapshot` + `--recording` on `landed`/`gitops status`/`doctor`, field writer-contention + revert prediction (`explain --field-path`), `--unrecorded-only`, G5 `agent/<tool>[/<run>]`, and Package C byte ceilings + `--view summary` + `--if-unchanged` delta answers (`#989`–`#1023`).
-- **`v3.1.0` (published 2026-11-26):** Shipped at https://github.com/confighub/cub-scout/releases/tag/v3.1.0 (`084a9e5f`, `#1025`–`#1033`) — complete strictly read-only agent write-loop:
-  - Pre-write safety sensor `cub scout before-write` + MCP `before_write` (`#1027`, 672B compact answer `<= 700B` ceiling).
-  - Offline Ed25519 `receipt keygen`/`sign`/`verify` (`signed-receipt/v1`, `#1026`, Refs `#889`).
-  - Full offline `trace --recording` + sanitized `Pod`/`PodDisruptionBudget` capture in `snapshot` (`#1028`).
-  - Standard `answer` envelopes and `<= 700B` ceilings on `watch` and `bot` streaming events (`#1025`, Refs `#596`).
-  - Multi-arch (`linux/amd64`, `linux/arm64`) GHCR `cub-scout bot` image config and hardened read-only deploy kit (`#1029`, Refs `#520`).
-  - Argo Rollouts (`argoproj.io/v1alpha1` `Rollout`) parity across `landed`, `before-write`, `trace`, and `snapshot` (`#1031`).
-  - Eval-gated ephemeral offline `graph blast-radius` (`#1032`; 82.98% overall byte reduction, 89.65% on 4-hop Flux, 1,084B `<= 1,200B` ceiling).
-  - Front-door agent write-loop guide and `v3.1.0` release notes (`#1030`, `#1033`).
-- **Remaining in 3.2 – 3.5:**
-  - **3.2 (Real-Cluster Controller & Live Graph Proof):** Real-cluster Argo Rollouts CI lane (and Modelplane when real-cluster gated), plus live-cluster `graph blast-radius` parity with bounded API reads.
-  - **3.3 – 3.4 (Write-Path Adoption & Fleet Receipt Verification):** CI promotion gate and ops-bot consumer contract (`k8sbot`, Pilot), offline multi-cluster `receipt verify-fleet` aggregation, standing 3.x release benchmarks (`docs/reference/answer-sizes.md`), and Krew/MCP registry distribution.
-  - **3.5 (Connected Multi-Cluster Fleet Promotion Proof):** Upstream ConfigHub `D6` storage agreement (`#600` observed facts and `G4` `ChangeWorkflow` attestations) and connected `dev` → `staging` → `prod` fleet promotion proof.
+**Status (2026-11-27):**
+
+| Milestone | Status | Release / PRs | What it delivers |
+|---|---|---|---|
+| **3.0** | **Shipped** | [v3.0.0](https://github.com/confighub/cub-scout/releases/tag/v3.0.0) (`#989`–`#1023`) | Single-cluster agent witness: `landed --verify-pod-images`, Flux/Argo CD/Helm v3/v4/kro/Crossplane parity, `snapshot` + `--recording`, writer contention & revert prediction, `--if-unchanged` ~89B delta polls, CI-enforced byte ceilings (99.78% smaller). |
+| **3.1** | **Shipped** | [v3.1.0](https://github.com/confighub/cub-scout/releases/tag/v3.1.0) (`#1025`–`#1033`) | Complete read-only agent write loop: `before-write` (CLI + MCP), offline Ed25519 `receipt keygen`/`sign`/`verify`, offline `trace --recording` + sanitized Pod/PDB snapshots, `watch`/`bot` `answer` envelopes, multi-arch GHCR bot deploy kit (`#520`), Argo Rollouts parity, offline `graph blast-radius` (82.98% smaller). |
+| **3.2** | **Shipped** | [v3.2.0](https://github.com/confighub/cub-scout/releases/tag/v3.2.0) (`#1034`–`#1041`) | Real-cluster Argo Rollouts `v1.8.3` CI lane (`rollouts-lane.sh`), live-cluster bounded `graph blast-radius` (CLI + MCP `graph_blast_radius` + `before-write --include-blast-radius`), reusable GitHub Actions CI promotion gate, ops-bot consumer contract, offline multi-cluster `receipt verify-fleet` + 4-cluster example, offline in-toto v1 `receipt export-attestation`, and `cub mini` hook contract. |
+| **3.3 – 3.4** | **Next (Ecosystem & Adoption)** | Maintainer / external | External Krew index PR + official MCP Registry submission (`server.json`), broad G5 `agent/<tool>[/<run>]` field-manager adoption across coding-agent skills, real-cluster Modelplane parity when gated, and standing 3.x release benchmarks. |
+| **3.5** | **Gated on ConfigHub `D6`** | `#600`, `G4` | Connected multi-cluster fleet promotion proof: opt-in per-cluster observed-fact / `G4` `ChangeWorkflow` attestation publishing into ConfigHub so `dev` → `staging` → `prod-east` → `prod-west` promotion gates run live without a second fleet DB. |
 
 This roadmap extends [agentic GitOps observability](../reference/agentic-gitops-observability.md)
-from **single-change verification (3.0) and the read-only write loop (3.1)** to
-**the independent, deterministic trust layer for multi-agent, multi-cluster
-Kubernetes (3.5)**.
+from **single-change verification (3.0)** and the **read-only write loop &
+offline fleet proof (3.1–3.2)** to **the independent, deterministic trust layer
+for multi-agent, multi-cluster Kubernetes (3.5)**.
 
 ---
 
@@ -51,10 +45,9 @@ remains binding across all of 3.x:
 ```text
 3.0  [shipped]  Single-cluster agent witness    landed (--verify-pod-images), Flux/Argo/Helm/kro/Crossplane, snapshot/--recording, contention, 99.78% smaller answers
 3.1  [shipped]  Read-only write loop & offline  before-write, Ed25519 receipt sign/verify (#889), trace --recording + Pod/PDB snapshot, watch/bot envelopes (#596), multi-arch bot kit (#520), Argo Rollouts parity, offline graph blast-radius
-3.2  [next]     Real-cluster & live graph       Real-cluster Argo Rollouts CI lane (& Modelplane when gated), live-cluster bounded graph blast-radius
-3.3  [next]     Write-path CI & bot adoption    CI promotion gate & ops-bot consumer contract (k8sbot/Pilot), standing 3.x release benchmarks, krew/MCP registry
-3.4  [next]     Offline fleet verification      receipt verify-fleet multi-cluster aggregation with per-cluster observedAt & staleness boundaries
-3.5  [gated]    ConfigHub fleet promotion proof Upstream D6 (#600 observed facts, G4 ChangeWorkflow attestations) composing dev -> staging -> prod promotion gates
+3.2  [shipped]  Live proof, CI gate & fleet     Real-cluster Rollouts CI lane, live graph blast-radius + MCP, before-write --include-blast-radius, CI promotion gate, ops-bot contract, offline receipt verify-fleet + 4-cluster kit, in-toto v1 export-attestation, cub mini contract
+3.3  [next]     External distribution & skills  Krew index PR, MCP Registry listing (server.json), G5 agent/* adoption in coding-agent skills, real-cluster Modelplane parity when gated
+3.5  [gated]    ConfigHub fleet promotion proof Upstream D6 (#600 observed facts, G4 ChangeWorkflow attestations) composing live dev -> staging -> prod promotion gates
 ```
 
 ---
@@ -89,48 +82,21 @@ Shipped in `v3.1.0` (`#1025`–`#1033`):
 
 ---
 
-### 3.2 — Real-Cluster Controller & Live Graph Proof *(remaining)*
-Already shipped in `v3.0.0` / `v3.1.0`: Flux, Argo CD, Helm v3/v4, kro,
-Crossplane, honest `not-observable` for Sveltos, Argo Rollouts
-(fixture/contract-tested), `Job`/`CronJob`, `--verify-pod-images`,
-`cub scout snapshot` (including sanitized Pods/PDBs), offline `trace`, offline
-`graph blast-radius`, and Ed25519 `receipt sign`/`verify`.
-
-Remaining in 3.2:
-1. **Real-cluster Argo Rollouts CI lane (and Modelplane when real-cluster gated):**
-   Prove what the live Argo Rollouts controller writes on a disposable kind
-   cluster in CI so Rollouts parity carries the same live-cluster guarantee as
-   Flux and Argo CD.
-2. **Live-cluster `graph blast-radius` parity:** Bounded live-cluster reads for
-   `graph blast-radius` matching the offline `--recording` output schema and
-   truncation bounds without introducing a persistent graph database.
+### 3.2 — Real-Cluster Proof, CI Gate, Live Blast-Radius & Offline Fleet Verification *(shipped in `v3.2.0`, 2026-11-27)*
+Shipped in `v3.2.0` (`#1034`–`#1041`):
+- **Real-cluster Argo Rollouts `v1.8.3` CI lane (`#1037`):** `scripts/ci/rollouts-lane.sh` wired into `CI / GitOps E2E`, proving `landed ro/<name> --verify-pod-images` (`landed`, `converging`, `not-landed`) against real `argoproj.io/v1alpha1` Rollouts and Pods in `kind`.
+- **Live-cluster `graph blast-radius` & MCP parity (`#1037`, `#1041`):** Bounded, sanitized live-cluster reads with `--kube-context`, `before-write --include-blast-radius` (CLI + MCP, capped at 5 workloads, `<= 700B` answer ceiling), and standalone read-only MCP tool `graph_blast_radius`.
+- **Reusable CI promotion gate & ops-bot consumer contract (`#1034`):** Drop-in read-only GitHub Actions composite gate (`examples/ci-gates/verify-landed/`) and `examples/bot/consumer-contract.md` for `k8sbot`, Pilot, and incident bots.
+- **Offline multi-cluster `receipt verify-fleet` & 4-cluster kit (`#1035`, `#1040`):** Deterministic, fail-closed Ed25519 aggregation across `dev` → `staging` → `prod-east` → `prod-west` (`examples/fleet-promotion-proof/`, `docs/howto/fleet-promotion-proof.md`).
+- **Offline in-toto Statement v1 export (`#1038`):** `cub-scout receipt export-attestation` emitting `https://confighub.com/attestations/landed/v1` ready for ConfigHub `G4` / `ChangeWorkflow` / `cosign`.
+- **`cub mini` hook contract & standing benchmarks (`#1036`, `#1039`):** Clean read-only witness vs write-owner contract (`docs/howto/cub-mini-integration.md`), Krew manifest updates, and 13-surface `answer-sizes.md` benchmarks.
 
 ---
 
-### 3.3 – 3.4 — Write-Path Adoption Flywheel & Offline Fleet Verification *(remaining)*
-**Clean boundary with `cub mini` and the `cub` plugin:**
-- `cub` / `cub mini` / plugin owns **intended state and writes** (spaces,
-  units, targets, edits, mutations).
-- `cub-scout` owns **read-only live-cluster sensing** that `cub mini` and
-  agent skills call immediately *before* writing (`before-write`) and *after*
-  writing (`landed --verify-pod-images`).
-
-Remaining in 3.3 – 3.4:
-1. **CI promotion gate & ops-bot consumer contract:** Reference GitHub Actions
-   / CI gate and ops-bot (`k8sbot`, Pilot) integration consuming `before-write`,
-   `landed --verify-pod-images`, `bot`/`watch` `answer` envelopes, and
-   `signed-receipt/v1` artifacts.
-2. **Offline multi-cluster `receipt verify-fleet`:** Verify and aggregate a set
-   of signed per-cluster receipts offline, surfacing per-cluster `observedAt`,
-   staleness, and missing/invalid signatures without requiring a fleet DB.
-3. **Writer self-identification (`G5`):** Broad adoption of
-   `agent/<tool>[/<run>]` in `--field-manager` so multi-agent contention is
-   immediately visible on every cluster.
-4. **Standing release benchmarks & distribution:** Maintain the free 24-case
-   bytes-and-tokens benchmark, 13-surface `answer` ceilings, and
-   `graph blast-radius` benchmark (`docs/reference/answer-sizes.md`) as a
-   standing gate across every 3.x minor release, alongside Krew and MCP
-   Registry distribution.
+### 3.3 – 3.4 — Ecosystem Distribution & Write-Path Adoption *(next)*
+1. **External registry submissions:** Submit `dist/krew/cub-scout.yaml` to the upstream `kubernetes-sigs/krew-index` and publish `server.json` to the official MCP Registry.
+2. **Broad G5 `agent/<tool>[/<run>]` adoption:** Standardize `--field-manager=agent/<tool>/<run>` across coding-agent skills and `cub mini` write flows so multi-agent contention is visible on every cluster.
+3. **Real-cluster Modelplane parity (when gated):** Add a real-cluster CI lane when Modelplane control-plane fixtures are ready to run deterministically in CI.
 
 ---
 
