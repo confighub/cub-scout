@@ -1,0 +1,108 @@
+name: "cub-scout verify-landed gate"
+description: "Strictly read-only CI promotion gate that verifies a revision landed on a workload and optionally signs and verifies an offline Ed25519 receipt."
+
+inputs:
+  target:
+    description: "Target workload (for example deploy/api, sts/db, ro/checkout)"
+    required: true
+  namespace:
+    description: "Kubernetes namespace of the target workload"
+    required: false
+    default: "default"
+  revision:
+    description: "Expected Git SHA or controller revision (--revision)"
+    required: false
+    default: ""
+  digest:
+    description: "Expected OCI digest, for example sha256:... (--digest)"
+    required: false
+    default: ""
+  unit-revision:
+    description: "Expected ConfigHub unit revision (--unit-revision)"
+    required: false
+    default: ""
+  verify-pod-images:
+    description: "Independently verify running Pod container imageIDs (--verify-pod-images)"
+    required: false
+    default: "false"
+  image:
+    description: "Expected running Pod image reference or sha256 digest (--image; requires verify-pod-images: true)"
+    required: false
+    default: ""
+  wait:
+    description: "Bounded read-only wait duration until settled (--wait, max 5m)"
+    required: false
+    default: "60s"
+  poll-interval:
+    description: "Interval between bounded-wait polls (--poll-interval, min 2s)"
+    required: false
+    default: ""
+  kube-context:
+    description: "Exact kube context for read-only inspection (--kube-context)"
+    required: false
+    default: ""
+  recording:
+    description: "Offline YAML/JSON cluster snapshot file (--recording; zero cluster calls)"
+    required: false
+    default: ""
+  run-before-write:
+    description: "Run optional read-only pre-write safety check (cub-scout before-write) before landed verification"
+    required: false
+    default: "false"
+  field-path:
+    description: "Optional canonical managedFields path for before-write (for example .spec.replicas)"
+    required: false
+    default: ""
+  sign-key-path:
+    description: "Optional path to an Ed25519 PKCS#8 private key PEM for offline cub-scout receipt sign"
+    required: false
+    default: ""
+  verify-pubkey-path:
+    description: "Optional path to an Ed25519 PKIX public key PEM for offline cub-scout receipt verify"
+    required: false
+    default: ""
+  cub-scout-bin:
+    description: "Path or command name for the cub-scout binary"
+    required: false
+    default: "cub-scout"
+  output-dir:
+    description: "Directory where landed.json and optional landed.signed.json are written"
+    required: false
+    default: ".cub-scout-gate"
+
+outputs:
+  state:
+    description: "Deterministic answer.state from cub-scout landed (landed, converging, not-landed, not-observable)"
+    value: ${{ steps.gate.outputs.state }}
+  receipt-path:
+    description: "Path to the raw cub-scout landed JSON payload"
+    value: ${{ steps.gate.outputs.receipt-path }}
+  signed-receipt-path:
+    description: "Path to the Ed25519 signed-receipt/v1 JSON envelope (empty if signing was not enabled)"
+    value: ${{ steps.gate.outputs.signed-receipt-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: gate
+      name: "Run read-only cub-scout verify-landed gate"
+      shell: bash
+      env:
+        CUB_SCOUT_BIN: ${{ inputs.cub-scout-bin }}
+        TARGET: ${{ inputs.target }}
+        NAMESPACE: ${{ inputs.namespace }}
+        REVISION: ${{ inputs.revision }}
+        DIGEST: ${{ inputs.digest }}
+        UNIT_REVISION: ${{ inputs.unit-revision }}
+        VERIFY_POD_IMAGES: ${{ inputs.verify-pod-images }}
+        IMAGE: ${{ inputs.image }}
+        WAIT_DURATION: ${{ inputs.wait }}
+        POLL_INTERVAL: ${{ inputs.poll-interval }}
+        KUBE_CONTEXT: ${{ inputs.kube-context }}
+        RECORDING: ${{ inputs.recording }}
+        RUN_BEFORE_WRITE: ${{ inputs.run-before-write }}
+        FIELD_PATH: ${{ inputs.field-path }}
+        SIGN_KEY_PATH: ${{ inputs.sign-key-path }}
+        VERIFY_PUBKEY_PATH: ${{ inputs.verify-pubkey-path }}
+        OUTPUT_DIR: ${{ inputs.output-dir }}
+      run: bash "${{ github.action_path }}/verify-landed.sh"
