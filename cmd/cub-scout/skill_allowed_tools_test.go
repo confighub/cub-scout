@@ -78,6 +78,7 @@ var readOnlyScoutPaths = map[string]bool{
 	"receipt show":              true,
 	"receipt validate":          true,
 	"receipt verify":            true,
+	"receipt verify-fleet":      true,
 	"scan":                      true,
 	"snapshot":                  true,
 	"status":                    true,

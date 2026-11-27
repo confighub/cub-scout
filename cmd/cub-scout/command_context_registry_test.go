@@ -52,6 +52,7 @@ var contextExempt = map[string]string{
 	"cub-scout receipt show":              "reads the local receipt store",
 	"cub-scout receipt sign":              "signs a local receipt or landed payload offline",
 	"cub-scout receipt validate":          "reads a local receipt",
+	"cub-scout receipt verify-fleet":      "verifies and aggregates local signed receipts offline",
 	"cub-scout setup":                     "local setup",
 	"cub-scout setup completion":          "prints shell completion",
 	"cub-scout setup connect":             "merges kubeconfigs, choosing its source context by its own flags",
