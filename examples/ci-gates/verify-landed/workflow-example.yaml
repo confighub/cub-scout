@@ -1,0 +1,93 @@
+# Copy-pasteable GitHub Actions CI promotion gate using cub-scout.
+#
+# Pattern:
+#   1. Your existing deploy step updates intended state (GitOps PR, cub, Helm).
+#   2. The strictly read-only verify-landed gate proves the exact revision and
+#      running Pod image digest landed in staging, signs an offline Ed25519
+#      receipt, verifies the signature, and fails closed if answer.state != landed.
+#   3. Downstream production promotion runs only after the gate passes.
+#
+# Refs #596, #645
+
+name: Staging Verification and Production Promotion Gate
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-staging:
+    name: Verify Staging Rollout (Read-Only Gate)
+    runs-on: ubuntu-latest
+    outputs:
+      landed_state: ${{ steps.verify.outputs.state }}
+      signed_receipt_path: ${{ steps.verify.outputs.signed-receipt-path }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install cub-scout (pinned release)
+        shell: bash
+        run: |
+          # Replace with your pinned release download + SHA-256 verification,
+          # or use a pre-baked runner image containing cub-scout.
+          cub-scout version
+
+      # Your existing deployment step runs here (for example: GitOps commit,
+      # `cub` unit update, or `helm upgrade`). cub-scout never mutates clusters.
+
+      - name: Materialize ephemeral Ed25519 signing keys (optional)
+        if: ${{ secrets.CUB_SCOUT_RECEIPT_PRIVKEY_PEM != '' && vars.CUB_SCOUT_RECEIPT_PUBKEY_PEM != '' }}
+        shell: bash
+        env:
+          PRIV_PEM: ${{ secrets.CUB_SCOUT_RECEIPT_PRIVKEY_PEM }}
+          PUB_PEM: ${{ vars.CUB_SCOUT_RECEIPT_PUBKEY_PEM }}
+        run: |
+          install -d -m 0700 "$RUNNER_TEMP/keys"
+          printf '%s\n' "$PRIV_PEM" > "$RUNNER_TEMP/keys/receipt-priv.pem"
+          chmod 0600 "$RUNNER_TEMP/keys/receipt-priv.pem"
+          printf '%s\n' "$PUB_PEM" > "$RUNNER_TEMP/keys/receipt-pub.pem"
+          chmod 0644 "$RUNNER_TEMP/keys/receipt-pub.pem"
+
+      - name: Verify workload landed in staging
+        id: verify
+        uses: ./examples/ci-gates/verify-landed
+        with:
+          target: deploy/api
+          namespace: staging
+          revision: ${{ github.sha }}
+          verify-pod-images: "true"
+          image: ghcr.io/example/api:v1.2.3
+          wait: "120s"
+          kube-context: staging-east
+          run-before-write: "true"
+          field-path: .spec.replicas
+          sign-key-path: ${{ secrets.CUB_SCOUT_RECEIPT_PRIVKEY_PEM != '' && format('{0}/keys/receipt-priv.pem', runner.temp) || '' }}
+          verify-pubkey-path: ${{ vars.CUB_SCOUT_RECEIPT_PUBKEY_PEM != '' && format('{0}/keys/receipt-pub.pem', runner.temp) || '' }}
+          output-dir: .cub-scout-gate
+
+      - name: Upload landing receipt artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-landed-receipt
+          path: |
+            ${{ steps.verify.outputs.receipt-path }}
+            ${{ steps.verify.outputs.signed-receipt-path }}
+          if-no-files-found: warn
+
+  promote-to-prod:
+    name: Promote to Production
+    needs: [verify-staging]
+    if: ${{ needs.verify-staging.outputs.landed_state == 'landed' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Promotion gate passed
+        run: |
+          echo "Staging verified: state=${{ needs.verify-staging.outputs.landed_state }}"
+          echo "Proceed with your production promotion workflow."

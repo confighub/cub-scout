@@ -12,6 +12,7 @@ Kubernetes ServiceAccount authentication.
 - [`rbac-readonly.yaml`](rbac-readonly.yaml): `Namespace`, `ServiceAccount`, `ClusterRole` with strictly `get`, `list`, and `watch` verbs only (zero write verbs), and `ClusterRoleBinding`.
 - [`deployment.yaml`](deployment.yaml): Hardened non-root `Deployment` (`runAsNonRoot: true`, `readOnlyRootFilesystem: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`, `seccompProfile: RuntimeDefault`) pinned to `ghcr.io/confighub/cub-scout:v3.0.0`, running `cub-scout bot --watch-backed`.
 - [`build-from-release.sh`](build-from-release.sh): Checksum-verified local image builder for `linux/amd64` and `linux/arm64` if your cluster cannot pull from GHCR.
+- [`consumer-contract.md`](consumer-contract.md): Contract for external ops bots (`k8sbot`, Pilot, Slack/incident bots) consuming `cub-scout bot` / `watch` JSONL and webhook `answer` envelopes without touching cluster APIs.
 
 ## 30-Second Deploy & Verification
 
