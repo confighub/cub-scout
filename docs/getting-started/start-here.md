@@ -21,9 +21,11 @@ configuration and image digests, and what pod-reported identity can and cannot
 prove.
 
 Wiring `cub-scout` into **`cub mini`**, a coding agent, an ops bot, or a CI
-gate? Start with the [Agent Write Loop](../howto/agent-write-loop.md) for
+gate? Start with the [Agent Write Loop](../howto/agent-write-loop.md) and
+[`cub mini` Integration Contract](../howto/cub-mini-integration.md) for
 `before-write`, `landed --verify-pod-images`, offline `snapshot` +
-`--recording`, and Ed25519 `receipt sign` / `verify`.
+`--recording`, Ed25519 `receipt sign` / `verify` / `verify-fleet`, and the
+reusable [CI Promotion Gate (`verify-landed`)](../../examples/ci-gates/verify-landed/).
 
 ---
 
@@ -117,9 +119,10 @@ cub scout landed deploy/api -n prod --revision <sha> --verify-pod-images --wait 
 cub scout snapshot --format yaml -o snap.yaml
 cub scout landed deploy/api -n prod --revision <sha> --verify-pod-images --recording snap.yaml --format json
 
-# Tamper-evident offline proof
+# Tamper-evident offline proof (single cluster and multi-cluster fleet)
 cub scout receipt sign --input landed.json --key priv.pem -o signed.json
 cub scout receipt verify --input signed.json --pubkey pub.pem --format json
+cub scout receipt verify-fleet --inputs ./receipts --pubkey pub.pem --revision <sha> --require-clusters dev,staging,prod --format json
 ```
 
 MCP server, context-pack, and ask-mode contract:
@@ -132,6 +135,8 @@ cub-scout context-pack --format json --max-bytes 16384
 
 Then:
 - [Agent Write Loop](../howto/agent-write-loop.md) (`before-write`, `landed --verify-pod-images`, `--recording`, Ed25519 receipts, `--view summary` / `--if-unchanged`)
+- [`cub mini` Integration Contract](../howto/cub-mini-integration.md) (pre-write/post-write hooks, boundary table, `receipt verify-fleet`)
+- [CI Promotion Gate (`verify-landed`)](../../examples/ci-gates/verify-landed/) (drop-in read-only GitHub Actions gate)
 - [Answer Sizes (99.78% smaller)](../reference/answer-sizes.md)
 - [Using cub-scout from an AI Tool](../howto/using-cub-scout-from-ai-tool.md)
 - [Context-Pack v2](../howto/context-pack-v2.md)
