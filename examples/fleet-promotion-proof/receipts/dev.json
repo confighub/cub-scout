@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "signed-receipt/v1",
+  "algorithm": "ed25519",
+  "keyId": "df41b88d81b29aa5",
+  "payloadDigest": "sha256:4131d1ffe14f315154a58d065f50fa5d9d24df1737c14cda73667300b05b7406",
+  "signature": "/Rz5PeifFWatQiWJWuMYejgdCBmsiSGpNg2dwLbuqC3ePdVXUWE6r48ivUjcm/Y2dJwjmALxWZMWbfBXP05nDQ==",
+  "signedAt": "2026-11-27T08:45:54Z",
+  "payload": {
+    "anchor": {
+      "kind": "git-sha",
+      "value": "7c9e2a4f"
+    },
+    "answer": {
+      "basis": [
+        {
+          "claim": "deployer reported ready",
+          "quoted": "revision=7c9e2a4f1b8d3e6059a1c2d3e4f5a6b7c8d9e0f1",
+          "ref": {
+            "kind": "Application",
+            "name": "payments-api",
+            "namespace": "argocd"
+          },
+          "restsOn": "controller-report"
+        },
+        {
+          "claim": "workload reported ready",
+          "quoted": "Deployment is available. Replicas: 1",
+          "ref": {
+            "kind": "Deployment",
+            "name": "api",
+            "namespace": "payments"
+          },
+          "restsOn": "object-metadata"
+        },
+        {
+          "claim": "pod-images reported ready",
+          "quoted": "1/1 running pods matched expected image",
+          "ref": {
+            "kind": "Deployment",
+            "name": "api",
+            "namespace": "payments"
+          },
+          "restsOn": "cub-scout-comparison"
+        }
+      ],
+      "cluster": {
+        "context": "dev",
+        "idSource": "not-read"
+      },
+      "cost": {
+        "coverage": "landed-session-client",
+        "durationMillis": 0,
+        "requestsMade": 0,
+        "responseBodyBytes": 0
+      },
+      "next": [],
+      "observedAt": "2026-11-27T08:00:00Z",
+      "reason": "revision-and-workload-converged",
+      "state": "landed",
+      "summary": "Deployment/api converged on the requested git-sha.",
+      "unknowns": []
+    },
+    "context": "dev",
+    "fingerprint": "63e635ca4695482b",
+    "owner": "argo",
+    "target": {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "name": "api",
+      "namespace": "payments"
+    }
+  }
+}
