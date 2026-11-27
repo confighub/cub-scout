@@ -59,7 +59,7 @@ func buildMCPStructuredContent(toolName, output string) interface{} {
 		// under `data` so MCP consumers see it via the same envelope shape
 		// as compare_three_way.
 		return mcpWrapStructuredData(payload)
-	case "gitops_status", "gitops_settings", "landed", "before_write":
+	case "gitops_status", "gitops_settings", "landed", "before_write", "graph_blast_radius":
 		return mcpWrapStructuredData(payload)
 	case "confighub_units":
 		return buildMCPUnitsStructuredContent(payload)

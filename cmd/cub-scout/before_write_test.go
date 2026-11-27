@@ -461,6 +461,140 @@ func TestBeforeWrite_MCPToolRegistrationAndBuildArgs(t *testing.T) {
 	// Reject malformed field_path.
 	_, err := tool.BuildArgs(map[string]interface{}{"resource": "deploy/api", "field_path": "spec.replicas"})
 	require.Error(t, err)
+
+	// include_blast_radius: true forwards --include-blast-radius.
+	replyWithBlast := gateway.runNamedTool(context.Background(), "before_write", tool, map[string]interface{}{
+		"resource":             "configmap/app-cfg",
+		"namespace":            "prod",
+		"include_blast_radius": true,
+	})
+	require.Equal(t, false, replyWithBlast["isError"], "reply: %v", replyWithBlast)
+	require.Equal(t, []string{"before-write", "configmap/app-cfg", "-n", "prod", "--include-blast-radius", "--format", "json"}, capturedArgs)
+	require.NotNil(t, replyWithBlast["structuredContent"])
+
+	// Reject non-boolean include_blast_radius.
+	_, err = tool.BuildArgs(map[string]interface{}{"resource": "deploy/api", "include_blast_radius": "yes"})
+	require.Error(t, err)
+}
+
+func TestBeforeWrite_IncludeBlastRadiusRecordingAndCap(t *testing.T) {
+	var b strings.Builder
+	b.WriteString(`# observedAt: 2026-11-26T00:00:00Z
+# sourceContext: prod-east
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  suspend: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shared-cfg
+  namespace: prod
+  labels:
+    kustomize.toolkit.fluxcd.io/name: apps
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
+data:
+  MODE: prod
+`)
+	for i := 1; i <= 7; i++ {
+		b.WriteString(`---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-0` + string(rune('0'+i)) + `
+  namespace: prod
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/svc:v1
+          envFrom:
+            - configMapRef:
+                name: shared-cfg
+`)
+	}
+
+	tmpDir := t.TempDir()
+	recPath := filepath.Join(tmpDir, "blast-cap.yaml")
+	require.NoError(t, os.WriteFile(recPath, []byte(b.String()), 0o600))
+
+	origNS, origFP, origRec, origCtx, origFmt, origBR := beforeWriteNamespace, beforeWriteFieldPath, beforeWriteRecording, beforeWriteKubeContext, beforeWriteFormat, beforeWriteIncludeBlastRadius
+	t.Cleanup(func() {
+		beforeWriteNamespace, beforeWriteFieldPath, beforeWriteRecording, beforeWriteKubeContext, beforeWriteFormat, beforeWriteIncludeBlastRadius = origNS, origFP, origRec, origCtx, origFmt, origBR
+		beforeWriteCmd.SetOut(os.Stdout)
+		if f := beforeWriteCmd.Flags().Lookup("kube-context"); f != nil {
+			f.Changed = false
+		}
+	})
+
+	beforeWriteNamespace = "prod"
+	beforeWriteFieldPath = ""
+	beforeWriteRecording = recPath
+	beforeWriteKubeContext = ""
+	beforeWriteFormat = "json"
+	beforeWriteCmd.Flags().Lookup("kube-context").Changed = false
+
+	// 1. Default (include-blast-radius=false): blastRadius omitted, zero regression.
+	beforeWriteIncludeBlastRadius = false
+	var defaultBuf bytes.Buffer
+	beforeWriteCmd.SetOut(&defaultBuf)
+	require.NoError(t, runBeforeWrite(beforeWriteCmd, []string{"configmap/shared-cfg"}))
+	require.NotContains(t, defaultBuf.String(), `"blastRadius"`)
+
+	var defaultOut beforeWriteOutput
+	require.NoError(t, json.Unmarshal(defaultBuf.Bytes(), &defaultOut))
+	require.Nil(t, defaultOut.BlastRadius)
+	requireConformingAnswer(t, defaultOut.Answer, explainStates, explainReasons)
+
+	// 2. Enabled (include-blast-radius=true): 7 workloads -> count=7, capped at 5, truncated=true.
+	beforeWriteIncludeBlastRadius = true
+	var blastBuf bytes.Buffer
+	beforeWriteCmd.SetOut(&blastBuf)
+	require.NoError(t, runBeforeWrite(beforeWriteCmd, []string{"configmap/shared-cfg"}))
+
+	var blastOut beforeWriteOutput
+	require.NoError(t, json.Unmarshal(blastBuf.Bytes(), &blastOut))
+	require.NotNil(t, blastOut.BlastRadius)
+	require.Equal(t, 7, blastOut.BlastRadius.AffectedWorkloadsCount)
+	require.Equal(t, []string{
+		"Deployment/prod/svc-01",
+		"Deployment/prod/svc-02",
+		"Deployment/prod/svc-03",
+		"Deployment/prod/svc-04",
+		"Deployment/prod/svc-05",
+	}, blastOut.BlastRadius.AffectedWorkloads)
+	require.True(t, blastOut.BlastRadius.Truncated)
+	requireConformingAnswer(t, blastOut.Answer, explainStates, explainReasons)
+	rawAns, err := json.Marshal(blastOut.Answer)
+	require.NoError(t, err)
+	require.LessOrEqual(t, len(rawAns), 700, "answer block must stay <= 700B, got %d", len(rawAns))
+
+	// Render ASCII and Markdown with blastRadius present.
+	var asciiBuf, mdBuf bytes.Buffer
+	require.NoError(t, renderBeforeWriteOutput(&asciiBuf, blastOut, "ascii"))
+	require.Contains(t, asciiBuf.String(), "Blast Radius: 7 affected workload(s) (truncated)")
+	require.NoError(t, renderBeforeWriteOutput(&mdBuf, blastOut, "md"))
+	require.Contains(t, mdBuf.String(), "**Blast Radius:** 7 affected workload(s) (truncated)")
+
+	// 3. Uncapped case (<= 5 workloads) sets truncated=false.
+	smallPath := filepath.Join(tmpDir, "blast-small.yaml")
+	require.NoError(t, os.WriteFile(smallPath, []byte(fluxMultiHopBlastFixture), 0o600))
+	beforeWriteRecording = smallPath
+	var smallBuf bytes.Buffer
+	beforeWriteCmd.SetOut(&smallBuf)
+	require.NoError(t, runBeforeWrite(beforeWriteCmd, []string{"configmap/app-cfg"}))
+
+	var smallOut beforeWriteOutput
+	require.NoError(t, json.Unmarshal(smallBuf.Bytes(), &smallOut))
+	require.NotNil(t, smallOut.BlastRadius)
+	require.Equal(t, 1, smallOut.BlastRadius.AffectedWorkloadsCount)
+	require.Equal(t, []string{"Deployment/prod/api"}, smallOut.BlastRadius.AffectedWorkloads)
+	require.False(t, smallOut.BlastRadius.Truncated)
 }
 
 func TestBeforeWrite_RecordingOfflineCLI_ArgoRollout(t *testing.T) {
